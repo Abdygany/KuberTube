@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check (api)
+        run: pnpm --filter @learnspace/api type-check
+
+      - name: Type-check (web)
+        run: pnpm --filter @learnspace/web type-check
+
+      - name: Type-check (db)
+        run: pnpm --filter @learnspace/db type-check
+
+      - name: Type-check (core)
+        run: pnpm --filter @learnspace/core type-check

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
+import { AppNav } from '@/components/app-nav';
 import { useSession } from '@/lib/auth-client';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -14,13 +15,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
   }, [isPending, session, router]);
 
-  if (isPending || !session) {
+  if (isPending) {
     return (
-      <main className="container flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </main>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
     );
   }
 
-  return <div className="min-h-screen bg-background">{children}</div>;
+  if (!session) return null;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AppNav />
+      {children}
+    </div>
+  );
 }
