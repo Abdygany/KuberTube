@@ -26,7 +26,7 @@ export default function SignUpPage() {
       setError(signUpError.message ?? 'Sign-up failed');
       return;
     }
-    router.push('/workspaces');
+    router.push('/onboarding');
   }
 
   return (

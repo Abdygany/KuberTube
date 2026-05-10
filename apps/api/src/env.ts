@@ -8,6 +8,7 @@ const EnvSchema = z.object({
   BETTER_AUTH_URL: z.string().url(),
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-fA-F]{64}$/, 'must be 64 hex chars'),
   WEB_ORIGIN: z.string().url().default('http://localhost:3000'),
+  CRON_SECRET: z.string().min(16).optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

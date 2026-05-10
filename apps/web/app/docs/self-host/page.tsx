@@ -56,6 +56,23 @@ pnpm db:push</code></pre>
         inside <code>apps/web</code>.
       </p>
 
+      <h2>5. Automated cleanup (30-day trash)</h2>
+      <p>
+        Learnspace soft-deletes workspaces and resources. After 30 days they are permanently
+        removed by the cleanup cron job.
+      </p>
+      <p>
+        Set <code>CRON_SECRET</code> in your API environment, then configure a daily cron
+        to call:
+      </p>
+      <pre><code>{`POST https://your-api-url/api/cron/cleanup
+Authorization: Bearer <CRON_SECRET>`}</code></pre>
+      <p>
+        On Railway: go to your API service → <em>Settings → Cron jobs</em> → add a daily
+        schedule with the command above. On other platforms, use any HTTP cron service
+        (cron-job.org, Render cron, etc.).
+      </p>
+
       <h2>Environment variables summary</h2>
       <table>
         <thead>
@@ -90,6 +107,11 @@ pnpm db:push</code></pre>
             <td><code>WEB_ORIGIN</code></td>
             <td>api</td>
             <td>Web app origin for CORS</td>
+          </tr>
+          <tr>
+            <td><code>CRON_SECRET</code></td>
+            <td>api</td>
+            <td>Bearer token protecting /api/cron/cleanup</td>
           </tr>
           <tr>
             <td><code>NEXT_PUBLIC_API_URL</code></td>
