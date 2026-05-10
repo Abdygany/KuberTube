@@ -117,27 +117,4 @@ export const keysRouter = router({
 
       return { isValid };
     }),
-
-  getDecrypted: protectedProcedure
-    .input(z.object({ provider: ProviderSchema }))
-    .query(async ({ ctx, input }) => {
-      const [row] = await ctx.db
-        .select()
-        .from(schema.userApiKeys)
-        .where(
-          and(
-            eq(schema.userApiKeys.userId, ctx.user.id),
-            eq(schema.userApiKeys.provider, input.provider),
-          ),
-        );
-      if (!row) return null;
-      await ctx.db
-        .update(schema.userApiKeys)
-        .set({ lastUsedAt: new Date() })
-        .where(eq(schema.userApiKeys.id, row.id));
-      return decrypt(
-        { ciphertext: row.encryptedKey, iv: row.keyIv, authTag: row.keyAuthTag },
-        env.ENCRYPTION_KEY,
-      );
-    }),
 });

@@ -12,6 +12,7 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
+    "test": "turbo run test",
     "db:push": "pnpm --filter @learnspace/db push",
     "db:generate": "pnpm --filter @learnspace/db generate",
     "db:studio": "pnpm --filter @learnspace/db studio",

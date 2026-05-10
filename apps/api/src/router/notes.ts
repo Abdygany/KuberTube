@@ -1,12 +1,15 @@
 import { schema } from '@learnspace/db';
+import { TRPCError } from '@trpc/server';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { protectedProcedure, router } from '../trpc';
+import { assertNoteOwned, assertResourceOwned } from './_authz';
 
 export const notesRouter = router({
   list: protectedProcedure
     .input(z.object({ resourceId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      await assertResourceOwned(ctx, input.resourceId);
       return ctx.db
         .select()
         .from(schema.notes)
@@ -26,13 +29,16 @@ export const notesRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await assertResourceOwned(ctx, input.resourceId);
       if (input.id) {
+        await assertNoteOwned(ctx, input.id);
         const [updated] = await ctx.db
           .update(schema.notes)
           .set({ contentMd: input.contentMd, updatedAt: new Date() })
           .where(eq(schema.notes.id, input.id))
           .returning();
-        return updated!;
+        if (!updated) throw new TRPCError({ code: 'NOT_FOUND' });
+        return updated;
       }
       const [created] = await ctx.db
         .insert(schema.notes)
@@ -42,12 +48,14 @@ export const notesRouter = router({
           timestampSeconds: input.timestampSeconds,
         })
         .returning();
-      return created!;
+      if (!created) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      return created;
     }),
 
   softDelete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
+      await assertNoteOwned(ctx, input.id);
       await ctx.db
         .update(schema.notes)
         .set({ deletedAt: new Date() })

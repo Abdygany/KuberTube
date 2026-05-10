@@ -9,7 +9,11 @@
     "tailwind"
   ],
   "exports": {
-    "./tailwind": "./tailwind/preset.ts"
+    "./tailwind": "./tailwind/preset.ts",
+    "./typescript/base.json": "./typescript/base.json",
+    "./typescript/node.json": "./typescript/node.json",
+    "./typescript/nextjs.json": "./typescript/nextjs.json",
+    "./eslint/base.js": "./eslint/base.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",

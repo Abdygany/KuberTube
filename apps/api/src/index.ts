@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import { serve } from '@hono/node-server';
 import { trpcServer } from '@hono/trpc-server';
 import { createDb, schema } from '@learnspace/db';
@@ -27,11 +28,15 @@ app.use(
 app.get('/', (c) => c.json({ ok: true, service: 'learnspace-api' }));
 
 app.post('/api/cron/cleanup', async (c) => {
-  if (env.CRON_SECRET) {
-    const auth_header = c.req.header('authorization');
-    if (auth_header !== `Bearer ${env.CRON_SECRET}`) {
-      return c.json({ error: 'Unauthorized' }, 401);
-    }
+  const header = c.req.header('authorization') ?? '';
+  const expected = `Bearer ${env.CRON_SECRET}`;
+  const headerBuf = Buffer.from(header);
+  const expectedBuf = Buffer.from(expected);
+  if (
+    headerBuf.length !== expectedBuf.length ||
+    !timingSafeEqual(headerBuf, expectedBuf)
+  ) {
+    return c.json({ error: 'Unauthorized' }, 401);
   }
 
   const db = createDb();

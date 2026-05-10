@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { decrypt } from '@learnspace/core';
 import { schema } from '@learnspace/db';
 import { and, eq, gt } from 'drizzle-orm';
@@ -6,6 +5,7 @@ import { z } from 'zod';
 import { WorkspaceFiltersSchema } from '../schemas';
 import { protectedProcedure, router } from '../trpc';
 import { env } from '../env';
+import { cacheHash, interleave } from './search.utils';
 
 export interface ResourceCandidate {
   url: string;
@@ -109,11 +109,6 @@ function nYearsAgo(n: number) {
   return d.toISOString();
 }
 
-function cacheHash(query: string, filters: Record<string, unknown>, provider: string): string {
-  const payload = JSON.stringify({ query: query.trim().toLowerCase(), filters, provider });
-  return createHash('sha256').update(payload).digest('hex');
-}
-
 export const searchRouter = router({
   run: protectedProcedure
     .input(
@@ -210,12 +205,3 @@ export const searchRouter = router({
     }),
 });
 
-function interleave<T>(a: T[], b: T[]): T[] {
-  const result: T[] = [];
-  const len = Math.max(a.length, b.length);
-  for (let i = 0; i < len; i++) {
-    if (i < a.length) result.push(a[i]!);
-    if (i < b.length) result.push(b[i]!);
-  }
-  return result;
-}

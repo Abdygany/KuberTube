@@ -1,13 +1,16 @@
 import { schema } from '@learnspace/db';
+import { TRPCError } from '@trpc/server';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { ResourceSourceSchema, ResourceTypeSchema } from '../schemas';
 import { protectedProcedure, router } from '../trpc';
+import { assertResourceOwned, assertWorkspaceOwned } from './_authz';
 
 export const resourcesRouter = router({
   list: protectedProcedure
     .input(z.object({ workspaceId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      await assertWorkspaceOwned(ctx, input.workspaceId);
       return ctx.db
         .select()
         .from(schema.resources)
@@ -36,6 +39,7 @@ export const resourcesRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await assertWorkspaceOwned(ctx, input.workspaceId);
       const [resource] = await ctx.db
         .insert(schema.resources)
         .values({
@@ -51,17 +55,19 @@ export const resourcesRouter = router({
           metadataJson: input.metadata ?? {},
         })
         .returning();
-      return resource!;
+      if (!resource) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      return resource;
     }),
 
   get: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      await assertResourceOwned(ctx, input.id);
       const [resource] = await ctx.db
         .select()
         .from(schema.resources)
         .where(eq(schema.resources.id, input.id));
-      if (!resource) throw new Error('Resource not found');
+      if (!resource) throw new TRPCError({ code: 'NOT_FOUND' });
       await ctx.db
         .update(schema.resources)
         .set({ lastOpenedAt: new Date() })
@@ -78,6 +84,7 @@ export const resourcesRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await assertResourceOwned(ctx, input.id);
       await ctx.db
         .update(schema.resources)
         .set({
@@ -90,6 +97,7 @@ export const resourcesRouter = router({
   softDelete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
+      await assertResourceOwned(ctx, input.id);
       await ctx.db
         .update(schema.resources)
         .set({ deletedAt: new Date() })

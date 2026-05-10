@@ -74,8 +74,13 @@ export default function OnboardingPage() {
     if (step > 0) setStep((s) => s - 1);
   }
 
-  async function finish() {
-    complete.mutate(state);
+  function finish() {
+    complete.mutate({
+      defaultLevel: state.level,
+      defaultDuration: state.duration,
+      defaultBalance: state.balance,
+      defaultFreshness: state.freshness,
+    });
   }
 
   const progress = ((step + 1) / STEPS.length) * 100;
@@ -245,7 +250,12 @@ export default function OnboardingPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => complete.mutate(state)}
+            onClick={() => complete.mutate({
+              defaultLevel: state.level,
+              defaultDuration: state.duration,
+              defaultBalance: state.balance,
+              defaultFreshness: state.freshness,
+            })}
             className="text-muted-foreground"
             disabled={complete.isPending}
           >

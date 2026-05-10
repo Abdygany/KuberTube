@@ -36,3 +36,9 @@ jobs:
 
       - name: Type-check (core)
         run: pnpm --filter @learnspace/core type-check
+
+      - name: Test (core)
+        run: pnpm --filter @learnspace/core test
+
+      - name: Test (api)
+        run: pnpm --filter @learnspace/api test
