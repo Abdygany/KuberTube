@@ -12,7 +12,7 @@ export default function AppHome() {
   const session = authClient.useSession();
   const enabled = Boolean(session.data?.user);
   const settings = trpc.settings.get.useQuery(undefined, { enabled });
-  const me = trpc.me.whoami.useQuery(undefined, { enabled });
+  const workspaces = trpc.workspaces.list.useQuery(undefined, { enabled });
 
   useEffect(() => {
     if (!session.isPending && !session.data?.user) {
@@ -27,6 +27,8 @@ export default function AppHome() {
   }, [settings.data, router]);
 
   if (session.isPending || !session.data?.user) return null;
+
+  const items = workspaces.data ?? [];
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-16">
@@ -53,14 +55,45 @@ export default function AppHome() {
         </div>
       </header>
 
-      <section className="mt-12 rounded-md border bg-[var(--color-card)] p-6">
-        <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-          Привет, {me.data?.name || session.data.user.name || session.data.user.email}.
+      <div className="mt-10">
+        <Link
+          href="/app/workspaces/new"
+          className="inline-block rounded-md px-4 py-2 text-sm text-white"
+          style={{ background: 'var(--color-accent)' }}
+        >
+          Создать workspace
+        </Link>
+      </div>
+
+      {workspaces.isPending && (
+        <p className="mt-6 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+          Загружаем…
         </p>
-        <p className="mt-2 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-          Список workspace'ов появится в C12. Сначала добавьте API-ключи на странице «Ключи».
+      )}
+
+      {!workspaces.isPending && items.length === 0 && (
+        <p className="mt-10 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+          Создайте первый workspace, чтобы начать.
         </p>
-      </section>
+      )}
+
+      {items.length > 0 && (
+        <ul className="mt-8 space-y-2">
+          {items.map((w) => (
+            <li key={w.id}>
+              <Link
+                href={`/app/workspaces/${w.id}`}
+                className="block rounded-md border bg-[var(--color-card)] px-4 py-3 transition-colors hover:border-[var(--color-accent)]"
+              >
+                <div className="font-medium">{w.title}</div>
+                <div className="mt-1 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+                  {w.goal}
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
