@@ -1,6 +1,7 @@
 'use client';
 
 import { BookOpen, Loader2, Plus, Target } from 'lucide-react';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -47,8 +48,10 @@ function CreateWorkspaceDialog() {
     onSuccess: (ws) => {
       utils.workspaces.list.invalidate();
       setOpen(false);
+      toast.success('Workspace created');
       router.push(`/workspaces/${ws.id}`);
     },
+    onError: (e) => toast.error(e.message),
   });
 
   const settings = trpc.user.settings.useQuery();

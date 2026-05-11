@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2, RotateCcw, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc';
@@ -12,7 +13,9 @@ export default function TrashPage() {
     onSuccess: () => {
       utils.workspaces.list.invalidate();
       utils.workspaces.listDeleted.invalidate();
+      toast.success('Workspace restored');
     },
+    onError: (e) => toast.error(e.message),
   });
 
   if (deleted.isLoading) {

@@ -27,6 +27,7 @@ import { Separator } from '@/components/ui/separator';
 import { signOut, useSession } from '@/lib/auth-client';
 import { trpc } from '@/lib/trpc';
 import { useTheme } from 'next-themes';
+import { toast } from 'sonner';
 
 type Provider = 'youtube' | 'brave' | 'anthropic';
 
@@ -43,9 +44,29 @@ function ApiKeyRow({
 }) {
   const utils = trpc.useUtils();
   const keys = trpc.keys.list.useQuery();
-  const upsert = trpc.keys.upsert.useMutation({ onSuccess: () => utils.keys.list.invalidate() });
-  const remove = trpc.keys.delete.useMutation({ onSuccess: () => utils.keys.list.invalidate() });
-  const validate = trpc.keys.validate.useMutation({ onSuccess: () => utils.keys.list.invalidate() });
+  const upsert = trpc.keys.upsert.useMutation({
+    onSuccess: () => {
+      utils.keys.list.invalidate();
+      toast.success('API key saved');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const remove = trpc.keys.delete.useMutation({
+    onSuccess: () => {
+      utils.keys.list.invalidate();
+      toast.success('API key removed');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const validate = trpc.keys.validate.useMutation({
+    onSuccess: (data) => {
+      utils.keys.list.invalidate();
+      toast[data.isValid ? 'success' : 'error'](
+        data.isValid ? 'Key works' : 'Key rejected by provider',
+      );
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const [value, setValue] = useState('');
   const [show, setShow] = useState(false);
@@ -173,10 +194,18 @@ export default function SettingsPage() {
 
   const settings = trpc.user.settings.useQuery();
   const updateSettings = trpc.user.updateSettings.useMutation({
-    onSuccess: () => utils.user.settings.invalidate(),
+    onSuccess: () => {
+      utils.user.settings.invalidate();
+      toast.success('Preferences saved');
+    },
+    onError: (e) => toast.error(e.message),
   });
   const updateMe = trpc.user.updateMe.useMutation({
-    onSuccess: () => utils.user.me.invalidate(),
+    onSuccess: () => {
+      utils.user.me.invalidate();
+      toast.success('Profile updated');
+    },
+    onError: (e) => toast.error(e.message),
   });
   const deleteAccount = trpc.user.deleteAccount.useMutation({
     onSuccess: async () => {

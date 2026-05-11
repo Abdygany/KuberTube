@@ -1,3 +1,7 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Get API keys' };
+
 export default function GetApiKeysPage() {
   return (
     <>

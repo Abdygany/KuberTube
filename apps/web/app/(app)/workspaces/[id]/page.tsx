@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { trpc } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface ResourceCandidate {
   url: string;
@@ -62,13 +63,19 @@ function SearchDialog({
   const [saving, setSaving] = useState<string | null>(null);
 
   const search = trpc.search.run.useMutation({
-    onSuccess: (data) => setResults(data),
+    onSuccess: (data) => {
+      setResults(data);
+      if (data.length === 0) toast.info('No results — try a different query');
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   const createResource = trpc.resources.create.useMutation({
     onSuccess: () => {
+      toast.success('Saved to workspace');
       onSaved();
     },
+    onError: (e) => toast.error(e.message),
   });
 
   async function handleSave(r: ResourceCandidate) {
@@ -120,9 +127,17 @@ function SearchDialog({
           </div>
 
           {search.error && (
-            <p className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              {search.error.message}
-            </p>
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              <p>{search.error.message}</p>
+              {/^No (youtube|brave) API key/.test(search.error.message) && (
+                <Link
+                  href="/settings"
+                  className="mt-1 inline-block underline-offset-4 hover:underline"
+                >
+                  Open Settings → API Keys
+                </Link>
+              )}
+            </div>
           )}
 
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
@@ -205,11 +220,24 @@ export default function WorkspacePage() {
 
   const ws = trpc.workspaces.get.useQuery({ id: params.id });
   const softDelete = trpc.resources.softDelete.useMutation({
-    onSuccess: () => ws.refetch(),
+    onSuccess: () => {
+      ws.refetch();
+      toast.success('Resource removed');
+    },
+    onError: (e) => toast.error(e.message),
   });
   const deleteWs = trpc.workspaces.softDelete.useMutation({
-    onSuccess: () => router.replace('/workspaces'),
+    onSuccess: () => {
+      toast.success('Workspace moved to trash');
+      router.replace('/workspaces');
+    },
+    onError: (e) => toast.error(e.message),
   });
+
+  function handleDeleteWs() {
+    if (!confirm('Move this workspace to trash? You can restore it within 30 days.')) return;
+    deleteWs.mutate({ id: params.id });
+  }
 
   if (ws.isLoading) {
     return (
@@ -267,7 +295,7 @@ export default function WorkspacePage() {
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:text-destructive"
-              onClick={() => deleteWs.mutate({ id: params.id })}
+              onClick={handleDeleteWs}
               title="Delete workspace"
             >
               <Trash2 className="h-4 w-4" />

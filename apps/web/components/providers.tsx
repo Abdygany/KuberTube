@@ -2,8 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
-import { ThemeProvider } from 'next-themes';
+import { ThemeProvider, useTheme } from 'next-themes';
 import { useState, type ReactNode } from 'react';
+import { Toaster } from 'sonner';
 import { trpc } from '@/lib/trpc';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -31,8 +32,23 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          {children}
+          <ThemedToaster />
+        </QueryClientProvider>
       </trpc.Provider>
     </ThemeProvider>
+  );
+}
+
+function ThemedToaster() {
+  const { resolvedTheme } = useTheme();
+  return (
+    <Toaster
+      theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+      richColors
+      closeButton
+      position="bottom-right"
+    />
   );
 }

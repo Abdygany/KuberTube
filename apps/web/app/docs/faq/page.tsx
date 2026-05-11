@@ -1,3 +1,7 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'FAQ' };
+
 const faqs = [
   {
     q: 'Is Learnspace free?',
