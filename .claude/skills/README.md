@@ -2,12 +2,12 @@
 
 Четыре скилла, расширяющие Claude Code под проект Learnspace.
 
-| Скилл | Назначение | Триггер |
-|---|---|---|
-| [`karpathy-guidelines`](./karpathy-guidelines/SKILL.md) | Дисциплина кода: думай → минимум → хирургично → проверка | Перед любым нетривиальным изменением кода |
-| [`learnspace-soul`](./learnspace-soul/SKILL.md) | Голос продукта (тексты для пользователя) | UI-копи, onboarding, README, landing, docs |
-| [`gstack-roles`](./gstack-roles/SKILL.md) | 8 ролей виртуальной команды как `/ls-*` команды | Задача попадает в роль (CEO/Eng/Design/Review/QA/Ship/CSO/DX) |
-| [`superpowers`](./superpowers/SKILL.md) | Методология: brainstorm → plan → exec → finish | Нетривиальные задачи (>2ч, ≥2 зоны кода) |
+| Скилл                                                   | Назначение                                               | Триггер                                                       |
+| ------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
+| [`karpathy-guidelines`](./karpathy-guidelines/SKILL.md) | Дисциплина кода: думай → минимум → хирургично → проверка | Перед любым нетривиальным изменением кода                     |
+| [`learnspace-soul`](./learnspace-soul/SKILL.md)         | Голос продукта (тексты для пользователя)                 | UI-копи, onboarding, README, landing, docs                    |
+| [`gstack-roles`](./gstack-roles/SKILL.md)               | 8 ролей виртуальной команды как `/ls-*` команды          | Задача попадает в роль (CEO/Eng/Design/Review/QA/Ship/CSO/DX) |
+| [`superpowers`](./superpowers/SKILL.md)                 | Методология: brainstorm → plan → exec → finish           | Нетривиальные задачи (>2ч, ≥2 зоны кода)                      |
 
 ## Источники-вдохновители
 
