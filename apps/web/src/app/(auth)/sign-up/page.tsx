@@ -24,7 +24,7 @@ export default function SignUpPage() {
       setError(authError.message ?? 'Не удалось создать аккаунт.');
       return;
     }
-    router.push('/app');
+    router.push('/onboarding');
   }
 
   return (
