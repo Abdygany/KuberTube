@@ -1,12 +1,13 @@
 'use client';
 
-import { ArrowLeft, CheckCircle2, Circle, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Circle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { NoteEditor } from '@/components/note-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { trpc } from '@/lib/trpc';
 import { ArticleReader } from './article-reader';
 import { VideoPlayer } from './video-player';
@@ -44,8 +45,23 @@ export default function ResourcePage() {
 
   if (resource.isLoading) {
     return (
-      <div className="container flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      <div className="container max-w-4xl space-y-6 py-8">
+        <Skeleton className="h-4 w-32" />
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-16" />
+            </div>
+            <Skeleton className="h-6 w-80" />
+          </div>
+          <Skeleton className="h-8 w-32" />
+        </div>
+        <Skeleton className="h-[360px] w-full rounded-lg" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+        </div>
       </div>
     );
   }

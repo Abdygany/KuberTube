@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { WorkspaceFiltersSchema } from '../schemas';
 import { protectedProcedure, router } from '../trpc';
 import { env } from '../env';
+import { assertWorkspaceOwned } from './_authz';
 import { cacheHash, interleave } from './search.utils';
 
 export interface ResourceCandidate {
@@ -167,7 +168,12 @@ export const searchRouter = router({
           .onConflictDoNothing();
       };
 
-      const [youtubeKey, braveKey] = await Promise.all([getKey('youtube'), getKey('brave')]);
+      // ownership check + key fetch run in parallel
+      const [, youtubeKey, braveKey] = await Promise.all([
+        assertWorkspaceOwned(ctx, input.workspaceId),
+        getKey('youtube'),
+        getKey('brave'),
+      ]);
 
       const [youtubeResults, braveResults] = await Promise.all([
         (async () => {

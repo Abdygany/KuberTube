@@ -1,5 +1,6 @@
 import { schema } from '@learnspace/db';
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { and, count, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { WorkspaceFiltersSchema } from '../schemas';
 import { protectedProcedure, router } from '../trpc';
@@ -15,36 +16,32 @@ export const workspacesRouter = router({
         createdAt: schema.workspaces.createdAt,
         updatedAt: schema.workspaces.updatedAt,
         lastOpenedAt: schema.workspaces.lastOpenedAt,
+        total: count(schema.resources.id),
+        completed: count(
+          sql`CASE WHEN ${schema.resources.isCompleted} = true THEN 1 END`,
+        ),
       })
       .from(schema.workspaces)
+      .leftJoin(
+        schema.resources,
+        and(
+          eq(schema.resources.workspaceId, schema.workspaces.id),
+          isNull(schema.resources.deletedAt),
+        ),
+      )
       .where(
         and(
           eq(schema.workspaces.userId, ctx.user.id),
           isNull(schema.workspaces.deletedAt),
         ),
       )
+      .groupBy(schema.workspaces.id)
       .orderBy(desc(schema.workspaces.lastOpenedAt));
 
-    const withProgress = await Promise.all(
-      rows.map(async (ws) => {
-        const resources = await ctx.db
-          .select({
-            isCompleted: schema.resources.isCompleted,
-          })
-          .from(schema.resources)
-          .where(
-            and(
-              eq(schema.resources.workspaceId, ws.id),
-              isNull(schema.resources.deletedAt),
-            ),
-          );
-        const total = resources.length;
-        const completed = resources.filter((r) => r.isCompleted).length;
-        return { ...ws, progress: { total, completed } };
-      }),
-    );
-
-    return withProgress;
+    return rows.map(({ total, completed, ...ws }) => ({
+      ...ws,
+      progress: { total, completed },
+    }));
   }),
 
   create: protectedProcedure
@@ -65,7 +62,8 @@ export const workspacesRouter = router({
           filtersJson: input.filters ?? {},
         })
         .returning();
-      return ws!;
+      if (!ws) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      return ws;
     }),
 
   get: protectedProcedure
@@ -80,7 +78,7 @@ export const workspacesRouter = router({
             eq(schema.workspaces.userId, ctx.user.id),
           ),
         );
-      if (!ws) throw new Error('Workspace not found');
+      if (!ws) throw new TRPCError({ code: 'NOT_FOUND', message: 'Workspace not found' });
 
       await ctx.db
         .update(schema.workspaces)
@@ -157,16 +155,15 @@ export const workspacesRouter = router({
     }),
 
   listDeleted: protectedProcedure.query(async ({ ctx }) => {
-    const rows = await ctx.db
+    return ctx.db
       .select()
       .from(schema.workspaces)
       .where(
         and(
           eq(schema.workspaces.userId, ctx.user.id),
-          // not null deletedAt
+          isNotNull(schema.workspaces.deletedAt),
         ),
       )
       .orderBy(desc(schema.workspaces.deletedAt));
-    return rows.filter((r) => r.deletedAt !== null);
   }),
 });
