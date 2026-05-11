@@ -1,5 +1,5 @@
 {
-  "name": "@learnspace/db",
+  "name": "@learnspace/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,24 +7,29 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts",
-    "./client": "./src/client.ts"
+    "./router": "./src/router.ts"
   },
   "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/migrate.ts",
-    "db:studio": "drizzle-kit studio",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@learnspace/core": "workspace:*",
+    "@learnspace/db": "workspace:*",
+    "@trpc/server": "^11.0.0-rc.660",
+    "better-auth": "^1.1.7",
     "drizzle-orm": "^0.45.2",
-    "postgres": "^3.4.5"
+    "hono": "^4.6.14",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@learnspace/config": "workspace:*",
-    "drizzle-kit": "^0.31.0",
+    "@types/node": "^22.10.0",
     "eslint": "^9.17.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
