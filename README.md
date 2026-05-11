@@ -30,16 +30,24 @@ packages/
 
 ## Запуск локально
 
-Требуется Node ≥ 22 и pnpm ≥ 10.
+Требуется Node ≥ 22, pnpm ≥ 10, Docker.
 
 ```bash
 pnpm install
-pnpm typecheck
-pnpm lint
+cp .env.example .env
+docker compose up -d postgres
+pnpm --filter @learnspace/db db:generate
+pnpm --filter @learnspace/db db:migrate
+pnpm dev
 ```
 
-Dev-сервер, миграции, docker-compose для Postgres — будут добавлены в следующих
-коммитах Фазы 0.
+После запуска:
+
+- web — http://localhost:3000
+- api — http://localhost:3001
+- healthcheck — http://localhost:3001/health
+
+Подробный гайд: [`docs/development.md`](./docs/development.md).
 
 ## Девять UX-принципов
 

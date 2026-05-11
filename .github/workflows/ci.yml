@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm format:check
+
+      - run: pnpm -w typecheck
+
+      - run: pnpm -w lint
+
+      - run: pnpm -w test
+
+      - run: pnpm -w build
+        env:
+          # Build-time placeholders, без них Next/Hono не падают,
+          # но валидация env.ts на старте сервера потребует реальные значения.
+          DATABASE_URL: postgres://placeholder:placeholder@localhost:5432/placeholder
+          ENCRYPTION_KEY: ci-placeholder-encryption-key-32-characters-long
+          AUTH_SECRET: ci-placeholder-auth-secret-32-characters-long-min
+          BETTER_AUTH_URL: http://localhost:3001
+          WEB_ORIGIN: http://localhost:3000
+          NEXT_PUBLIC_API_URL: http://localhost:3001

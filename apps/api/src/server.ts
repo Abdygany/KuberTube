@@ -38,12 +38,9 @@ app.all('/trpc/*', (c) =>
   }),
 );
 
-const server = serve(
-  { fetch: app.fetch, port: env.PORT },
-  ({ port }) => {
-    console.warn(`Learnspace API listening on http://localhost:${port}`);
-  },
-);
+const server = serve({ fetch: app.fetch, port: env.PORT }, ({ port }) => {
+  console.warn(`Learnspace API listening on http://localhost:${port}`);
+});
 
 const shutdown = (signal: NodeJS.Signals) => {
   console.warn(`Received ${signal}, shutting down`);

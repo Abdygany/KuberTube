@@ -5,8 +5,8 @@ export default function LandingPage() {
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-6 py-16">
       <h1 className="font-serif text-4xl leading-tight tracking-tight">Learnspace</h1>
       <p className="mt-4 text-lg" style={{ color: 'var(--color-fg-muted)' }}>
-        Учебный workspace, защищающий намерение учиться. Без рекомендаций, автоплея и
-        бесконечных лент.
+        Учебный workspace, защищающий намерение учиться. Без рекомендаций, автоплея и бесконечных
+        лент.
       </p>
       <div className="mt-10 flex gap-4">
         <Link
@@ -23,10 +23,7 @@ export default function LandingPage() {
           Создать аккаунт
         </Link>
       </div>
-      <p
-        className="mt-12 text-sm"
-        style={{ color: 'var(--color-fg-muted)' }}
-      >
+      <p className="mt-12 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
         Статус: Фаза 0 — настройка окружения. Полный функционал — впереди.
       </p>
     </main>
