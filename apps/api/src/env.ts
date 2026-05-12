@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { parseMasterKey } from "@kubertube/core";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -6,10 +7,18 @@ function required(name: string): string {
   return value;
 }
 
+const encryptionKeyRaw = required("ENCRYPTION_KEY");
+const masterKey = parseMasterKey(encryptionKeyRaw);
+
 export const env = {
   DATABASE_URL: required("DATABASE_URL"),
   BETTER_AUTH_SECRET: required("BETTER_AUTH_SECRET"),
   BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? "http://localhost:3001",
-  WEB_URL: process.env.WEB_URL ?? "http://localhost:3000",
+  WEB_URL: stripTrailingSlash(process.env.WEB_URL ?? "http://localhost:3000"),
   PORT: Number(process.env.PORT ?? 3001),
+  MASTER_KEY: masterKey,
 } as const;
+
+function stripTrailingSlash(value: string): string {
+  return value.endsWith("/") ? value.slice(0, -1) : value;
+}

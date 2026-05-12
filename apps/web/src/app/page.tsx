@@ -28,6 +28,11 @@ export default function LandingPage() {
           Sign in
         </Link>
       </nav>
+
+      <footer className="pt-12 text-xs text-muted">
+        Open-source · BYO API keys (YouTube + Brave Search обязательно, Anthropic
+        опционально).
+      </footer>
     </main>
   );
 }

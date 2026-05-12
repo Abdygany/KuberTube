@@ -30,7 +30,8 @@ export default function SignUpPage() {
       setError(signUpError.message ?? "Sign up failed");
       return;
     }
-    router.push("/");
+    router.replace("/app");
+    router.refresh();
   }
 
   return (
