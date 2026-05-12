@@ -1,7 +1,14 @@
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, eq, gt, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { searchQueries, searchResultsCache, workspaces, type Database } from "@kubertube/db";
+import {
+  notes,
+  resources,
+  searchQueries,
+  searchResultsCache,
+  workspaces,
+  type Database,
+} from "@kubertube/db";
 import {
   buildCacheKey,
   interleaveByProvider,
@@ -230,4 +237,84 @@ export const searchRouter = router({
         cacheHits,
       };
     }),
+
+  /**
+   * Searches the user's saved content (resource titles/descriptions
+   * + note bodies). ILIKE-based; per-user corpora are small. Returns
+   * up to 50 hits cross-workspace, each with a snippet centered on
+   * the match so the caller can render context.
+   */
+  savedContent: protectedProcedure
+    .input(z.object({ q: z.string().min(2).max(100) }))
+    .query(async ({ ctx, input }) => {
+      const term = `%${input.q}%`;
+      const userId = ctx.user.id;
+
+      const resourceHits = await ctx.db
+        .select({
+          kind: sql<"resource">`'resource'`,
+          resourceId: resources.id,
+          workspaceId: resources.workspaceId,
+          workspaceTitle: workspaces.title,
+          title: resources.title,
+          haystack: resources.description,
+          savedAt: resources.savedAt,
+        })
+        .from(resources)
+        .innerJoin(workspaces, eq(workspaces.id, resources.workspaceId))
+        .where(
+          and(
+            eq(workspaces.userId, userId),
+            isNull(resources.deletedAt),
+            isNull(workspaces.deletedAt),
+            or(ilike(resources.title, term), ilike(resources.description, term)),
+          ),
+        )
+        .limit(50);
+
+      const noteHits = await ctx.db
+        .select({
+          kind: sql<"note">`'note'`,
+          resourceId: notes.resourceId,
+          workspaceId: workspaces.id,
+          workspaceTitle: workspaces.title,
+          title: resources.title,
+          haystack: notes.contentMd,
+          savedAt: notes.updatedAt,
+        })
+        .from(notes)
+        .innerJoin(resources, eq(resources.id, notes.resourceId))
+        .innerJoin(workspaces, eq(workspaces.id, resources.workspaceId))
+        .where(
+          and(
+            eq(workspaces.userId, userId),
+            isNull(notes.deletedAt),
+            isNull(resources.deletedAt),
+            isNull(workspaces.deletedAt),
+            ilike(notes.contentMd, term),
+          ),
+        )
+        .limit(50);
+
+      const merged = [...resourceHits, ...noteHits]
+        .map((hit) => ({
+          ...hit,
+          snippet: buildSnippet(hit.haystack, input.q),
+        }))
+        .sort((a, b) => b.savedAt.getTime() - a.savedAt.getTime())
+        .slice(0, 50);
+
+      return merged;
+    }),
 });
+
+function buildSnippet(haystack: string | null, needle: string): string {
+  if (!haystack) return "";
+  const idx = haystack.toLowerCase().indexOf(needle.toLowerCase());
+  if (idx === -1) return haystack.slice(0, 160);
+  const start = Math.max(0, idx - 40);
+  const end = Math.min(haystack.length, idx + needle.length + 120);
+  const prefix = start > 0 ? "…" : "";
+  const suffix = end < haystack.length ? "…" : "";
+  return `${prefix}${haystack.slice(start, end)}${suffix}`;
+}

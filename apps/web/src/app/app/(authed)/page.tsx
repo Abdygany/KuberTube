@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { BookOpen, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SavedSearch } from "@/components/search/saved-search";
 import { trpc } from "@/lib/trpc/react";
 
 export default function WorkspacesListPage() {
@@ -30,6 +31,10 @@ export default function WorkspacesListPage() {
           </Link>
         </Button>
       </header>
+
+      <div className="mb-6">
+        <SavedSearch />
+      </div>
 
       {list.isLoading ? (
         <ul className="space-y-2">

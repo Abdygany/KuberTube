@@ -251,7 +251,7 @@ async function readCappedBody(
   return { ok: true, body: Buffer.concat(chunks).toString("utf8") };
 }
 
-function isPrivateIp(addr: string): boolean {
+export function isPrivateIp(addr: string): boolean {
   const version = isIP(addr);
   if (version === 4) return isPrivateIPv4(addr);
   if (version === 6) return isPrivateIPv6(addr);

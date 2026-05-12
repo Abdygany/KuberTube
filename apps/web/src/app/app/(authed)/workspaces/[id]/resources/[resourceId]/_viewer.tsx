@@ -6,6 +6,7 @@ import { useCallback, useRef } from "react";
 import { extractYouTubeId } from "@kubertube/core/url";
 import { NotesEditor } from "@/components/viewer/notes-editor";
 import { ReaderView } from "@/components/viewer/reader-view";
+import { SummarySection } from "@/components/viewer/summary-section";
 import { YouTubePlayer, type YouTubePlayerHandle } from "@/components/viewer/youtube-player";
 import { trpc } from "@/lib/trpc/react";
 
@@ -95,6 +96,8 @@ export function ResourceViewer({
               </a>
             </div>
           ) : null}
+
+          <SummarySection resourceId={resource.id} />
         </div>
 
         <aside className="space-y-3">

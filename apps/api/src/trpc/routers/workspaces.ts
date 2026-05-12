@@ -1,8 +1,9 @@
-import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { workspaces } from "@kubertube/db";
+import { notes, resources, workspaces } from "@kubertube/db";
 import { workspaceFiltersSchema } from "@kubertube/core";
+import { htmlToMarkdown } from "../../lib/text";
 import { protectedProcedure, router } from "../trpc";
 
 const createInput = z.object({
@@ -155,4 +156,152 @@ export const workspacesRouter = router({
       if (!row) throw new TRPCError({ code: "NOT_FOUND" });
       return row;
     }),
+
+  /**
+   * Serializes the workspace, its saved resources, and per-resource
+   * notes to a markdown string suitable for download. Notes are
+   * stored as TipTap HTML (the column is named `content_md` but
+   * holds HTML — see notes/router); they're run through
+   * `htmlToMarkdown` here.
+   */
+  exportMarkdown: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [workspace] = await ctx.db
+        .select({
+          id: workspaces.id,
+          title: workspaces.title,
+          goal: workspaces.goal,
+          filtersJson: workspaces.filtersJson,
+          createdAt: workspaces.createdAt,
+        })
+        .from(workspaces)
+        .where(
+          and(
+            eq(workspaces.id, input.id),
+            eq(workspaces.userId, ctx.user.id),
+            isNull(workspaces.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!workspace) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const savedResources = await ctx.db
+        .select({
+          id: resources.id,
+          url: resources.url,
+          type: resources.type,
+          source: resources.source,
+          title: resources.title,
+          description: resources.description,
+          durationSeconds: resources.durationSeconds,
+          publishedAt: resources.publishedAt,
+          isCompleted: resources.isCompleted,
+        })
+        .from(resources)
+        .where(and(eq(resources.workspaceId, input.id), isNull(resources.deletedAt)))
+        .orderBy(asc(resources.savedAt));
+
+      const resourceIds = savedResources.map((r) => r.id);
+      const allNotes = resourceIds.length
+        ? await ctx.db
+            .select({
+              id: notes.id,
+              resourceId: notes.resourceId,
+              contentMd: notes.contentMd,
+              timestampSeconds: notes.timestampSeconds,
+            })
+            .from(notes)
+            .where(and(isNull(notes.deletedAt)))
+            .orderBy(asc(notes.timestampSeconds), asc(notes.createdAt))
+        : [];
+
+      const notesByResource = new Map<string, typeof allNotes>();
+      for (const note of allNotes) {
+        if (!resourceIds.includes(note.resourceId)) continue;
+        const list = notesByResource.get(note.resourceId) ?? [];
+        list.push(note);
+        notesByResource.set(note.resourceId, list);
+      }
+
+      const lines: string[] = [];
+      lines.push(`# ${workspace.title}`);
+      lines.push("");
+      lines.push(`> ${workspace.goal.replace(/\n/g, "\n> ")}`);
+      lines.push("");
+      const filters = workspaceFiltersSchema.safeParse(workspace.filtersJson).data;
+      if (filters) {
+        lines.push(
+          `_Filters: level=${filters.level}, duration=${filters.duration}, balance=${filters.balance}, freshness=${filters.freshness}_`,
+        );
+        lines.push("");
+      }
+      lines.push(`_Created: ${workspace.createdAt.toISOString().slice(0, 10)}_`);
+      lines.push("");
+      lines.push("---");
+      lines.push("");
+
+      if (savedResources.length === 0) {
+        lines.push("_No saved resources._");
+      } else {
+        lines.push("## Resources");
+        lines.push("");
+        for (const resource of savedResources) {
+          const checkbox = resource.isCompleted ? "x" : " ";
+          lines.push(`### [${checkbox}] ${resource.title}`);
+          lines.push("");
+          const meta: string[] = [resource.source === "youtube" ? "YouTube" : "Web"];
+          if (resource.durationSeconds) meta.push(`${Math.round(resource.durationSeconds / 60)} min`);
+          if (resource.publishedAt) meta.push(resource.publishedAt.toISOString().slice(0, 10));
+          lines.push(`_${meta.join(" · ")}_`);
+          lines.push("");
+          lines.push(resource.url);
+          lines.push("");
+          if (resource.description) {
+            lines.push(resource.description.trim());
+            lines.push("");
+          }
+          const noteList = notesByResource.get(resource.id) ?? [];
+          if (noteList.length > 0) {
+            lines.push("**Notes:**");
+            lines.push("");
+            for (const note of noteList) {
+              const md = htmlToMarkdown(note.contentMd).trim();
+              if (!md) continue;
+              if (note.timestampSeconds === null) {
+                lines.push(md);
+              } else {
+                const t = formatSeconds(note.timestampSeconds);
+                lines.push(`- **[${t}]** ${md}`);
+              }
+              lines.push("");
+            }
+          }
+        }
+      }
+
+      return {
+        filename: `${slugify(workspace.title)}.md`,
+        markdown: lines.join("\n"),
+      };
+    }),
 });
+
+function formatSeconds(total: number): string {
+  const t = Math.max(0, Math.floor(total));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = t % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function slugify(title: string): string {
+  return (
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9а-яё]+/gi, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 60) || "workspace"
+  );
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, FileText, RefreshCw, Search, Trash2, Video } from "lucide-react";
+import { AlertTriangle, Download, FileText, RefreshCw, Search, Trash2, Video } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -94,6 +94,25 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
     return { ...candidate };
   }
 
+  const exportQuery = trpc.workspaces.exportMarkdown.useQuery(
+    { id: initial.id },
+    { enabled: false },
+  );
+
+  async function exportToMarkdown() {
+    const result = await exportQuery.refetch();
+    if (!result.data) return;
+    const blob = new Blob([result.data.markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = result.data.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
       <header className="space-y-2">
@@ -116,6 +135,12 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
           <Button variant="secondary" onClick={() => refresh(true)} disabled={search.isPending}>
             <RefreshCw className="mr-1.5 h-4 w-4" />
             Refresh selection
+          </Button>
+        ) : null}
+        {(saved.data?.length ?? 0) > 0 ? (
+          <Button variant="secondary" onClick={exportToMarkdown} disabled={exportQuery.isFetching}>
+            <Download className="mr-1.5 h-4 w-4" />
+            {exportQuery.isFetching ? "Exporting..." : "Export"}
           </Button>
         ) : null}
         <span className="ml-auto" />
