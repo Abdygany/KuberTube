@@ -182,4 +182,71 @@ export const resourcesRouter = router({
         .where(eq(resources.id, input.id));
       return { ok: true as const };
     }),
+
+  byId: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const [row] = await ctx.db
+        .select({
+          ...RESOURCE_SELECT,
+          workspaceId: resources.workspaceId,
+        })
+        .from(resources)
+        .innerJoin(workspaces, eq(workspaces.id, resources.workspaceId))
+        .where(
+          and(
+            eq(resources.id, input.id),
+            eq(workspaces.userId, ctx.user.id),
+            isNull(resources.deletedAt),
+            isNull(workspaces.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      void ctx.db
+        .update(resources)
+        .set({ lastOpenedAt: new Date() })
+        .where(eq(resources.id, input.id));
+      return row;
+    }),
+
+  /**
+   * Video player heartbeat. Floor at 2 seconds between writes to
+   * stop a malicious client from hammering the DB.
+   */
+  updateProgress: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        progressSeconds: z.number().int().nonnegative().max(86_400),
+        isCompleted: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await ctx.db
+        .select({
+          workspaceId: resources.workspaceId,
+          lastOpenedAt: resources.lastOpenedAt,
+        })
+        .from(resources)
+        .where(and(eq(resources.id, input.id), isNull(resources.deletedAt)))
+        .limit(1);
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      await assertOwnsWorkspace(ctx.db, ctx.user.id, row.workspaceId);
+
+      const now = new Date();
+      if (row.lastOpenedAt && now.getTime() - row.lastOpenedAt.getTime() < 2_000) {
+        return { ok: true as const, throttled: true };
+      }
+
+      await ctx.db
+        .update(resources)
+        .set({
+          progressSeconds: input.progressSeconds,
+          lastOpenedAt: now,
+          ...(input.isCompleted === undefined ? {} : { isCompleted: input.isCompleted }),
+        })
+        .where(eq(resources.id, input.id));
+      return { ok: true as const, throttled: false };
+    }),
 });

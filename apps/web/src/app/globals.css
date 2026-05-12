@@ -34,3 +34,42 @@
     font-family: var(--font-sans);
   }
 }
+
+@layer components {
+  .reader-content :where(p) {
+    @apply my-4;
+  }
+  .reader-content :where(h1, h2, h3) {
+    @apply mt-8 mb-3 font-semibold;
+  }
+  .reader-content :where(h2) {
+    @apply text-xl;
+  }
+  .reader-content :where(h3) {
+    @apply text-lg;
+  }
+  .reader-content :where(a) {
+    @apply text-foreground underline underline-offset-2;
+  }
+  .reader-content :where(blockquote) {
+    @apply my-4 border-l-2 border-border pl-4 text-muted;
+  }
+  .reader-content :where(ul, ol) {
+    @apply my-3 pl-6;
+  }
+  .reader-content :where(ul) {
+    @apply list-disc;
+  }
+  .reader-content :where(ol) {
+    @apply list-decimal;
+  }
+  .reader-content :where(img) {
+    @apply my-4 rounded;
+  }
+  .reader-content :where(pre) {
+    @apply my-4 overflow-x-auto rounded bg-card p-3 font-mono text-sm;
+  }
+  .reader-content :where(code) {
+    @apply rounded bg-card px-1 py-0.5 font-mono text-[0.9em];
+  }
+}

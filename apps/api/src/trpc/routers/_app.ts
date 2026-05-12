@@ -5,6 +5,8 @@ import { keysRouter } from "./keys";
 import { workspacesRouter } from "./workspaces";
 import { searchRouter } from "./search";
 import { resourcesRouter } from "./resources";
+import { notesRouter } from "./notes";
+import { readerRouter } from "./reader";
 
 export const appRouter = router({
   user: userRouter,
@@ -13,6 +15,8 @@ export const appRouter = router({
   workspaces: workspacesRouter,
   search: searchRouter,
   resources: resourcesRouter,
+  notes: notesRouter,
+  reader: readerRouter,
 });
 
 export type AppRouter = typeof appRouter;
