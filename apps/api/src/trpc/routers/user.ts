@@ -66,4 +66,27 @@ export const userRouter = router({
       }
       return { ok: true as const };
     }),
+
+  /**
+   * Hard-deletes the user and everything cascade-attached to it
+   * (sessions, accounts, settings, api keys, workspaces, resources,
+   * notes — all wired with ON DELETE CASCADE). The confirmation
+   * email gate is enforced server-side so a CSRF couldn't trick a
+   * misclick into wiping the account.
+   *
+   * No 30-day restore window for account-level deletion (PROJECT.pdf
+   * §6 Phase 4 "удаление аккаунта (полное стирание)").
+   */
+  deleteAccount: protectedProcedure
+    .input(z.object({ confirmEmail: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.confirmEmail.trim().toLowerCase() !== ctx.user.email.toLowerCase()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Confirmation email does not match your account",
+        });
+      }
+      await ctx.db.delete(users).where(eq(users.id, ctx.user.id));
+      return { ok: true as const };
+    }),
 });

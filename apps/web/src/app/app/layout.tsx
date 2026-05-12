@@ -22,18 +22,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4 md:px-6">
           <Link href="/app" className="text-sm font-semibold">
             KuberTube
           </Link>
-          <nav className="flex items-center gap-4 text-sm text-muted">
+          <nav className="flex items-center gap-2 text-sm text-muted md:gap-4">
             <Link href="/app" className="hover:text-foreground">
               Workspaces
             </Link>
             <Link href="/app/settings" className="hover:text-foreground">
               Settings
             </Link>
-            <span className="hidden text-xs md:inline">{me.email}</span>
+            <span className="hidden text-xs lg:inline">{me.email}</span>
             <ThemeToggle />
             <SignOutButton />
           </nav>

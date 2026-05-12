@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { workspaces } from "@kubertube/db";
@@ -33,6 +33,19 @@ export const workspacesRouter = router({
       .where(and(eq(workspaces.userId, ctx.user.id), isNull(workspaces.deletedAt)))
       .orderBy(desc(workspaces.lastOpenedAt));
     return rows;
+  }),
+
+  listDeleted: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db
+      .select({
+        id: workspaces.id,
+        title: workspaces.title,
+        goal: workspaces.goal,
+        deletedAt: workspaces.deletedAt,
+      })
+      .from(workspaces)
+      .where(and(eq(workspaces.userId, ctx.user.id), isNotNull(workspaces.deletedAt)))
+      .orderBy(desc(workspaces.deletedAt));
   }),
 
   byId: protectedProcedure

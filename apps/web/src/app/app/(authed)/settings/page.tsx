@@ -2,6 +2,7 @@ import { ProfileSection } from "./_components/profile-section";
 import { DefaultsSection } from "./_components/defaults-section";
 import { KeysSection } from "./_components/keys-section";
 import { ThemeSection } from "./_components/theme-section";
+import { DangerZone } from "./_components/danger-zone";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default function SettingsPage() {
       <DefaultsSection />
       <KeysSection />
       <ThemeSection />
+      <DangerZone />
     </div>
   );
 }
