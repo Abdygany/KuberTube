@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
+import { sanitizeNextPath } from "@/lib/safe-redirect";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function SignInPage() {
       setError(signInError.message ?? "Invalid email or password");
       return;
     }
-    const next = new URLSearchParams(window.location.search).get("next") ?? "/app";
+    const next = sanitizeNextPath(new URLSearchParams(window.location.search).get("next"));
     router.replace(next);
     router.refresh();
   }
