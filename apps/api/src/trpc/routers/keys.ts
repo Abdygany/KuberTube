@@ -5,13 +5,13 @@ import { userApiKeys } from "@kubertube/db";
 import {
   apiKeyAad,
   CURRENT_KEY_VERSION,
-  decryptSecret,
   encryptSecret,
   maskLast4,
   providerSchema,
   validateKey,
 } from "@kubertube/core";
 import { protectedProcedure, router } from "../trpc";
+import { decryptUserKey } from "../keys-helper";
 
 export const keysRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -88,38 +88,14 @@ export const keysRouter = router({
   revalidate: protectedProcedure
     .input(z.object({ provider: providerSchema }))
     .mutation(async ({ ctx, input }) => {
-      const [row] = await ctx.db
-        .select()
-        .from(userApiKeys)
-        .where(
-          and(eq(userApiKeys.userId, ctx.user.id), eq(userApiKeys.provider, input.provider)),
-        )
-        .limit(1);
-      if (!row) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Key not configured" });
-      }
-      let plain: string;
-      try {
-        plain = decryptSecret(
-          row.encryptedKey,
-          ctx.masterKey,
-          apiKeyAad(ctx.user.id, input.provider),
-        );
-      } catch {
-        await ctx.db
-          .update(userApiKeys)
-          .set({ isValid: false, lastValidatedAt: new Date() })
-          .where(eq(userApiKeys.id, row.id));
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Stored key is unreadable; please re-enter it",
-        });
-      }
+      const plain = await decryptUserKey(ctx.db, ctx.user.id, input.provider, ctx.masterKey);
       const validation = await validateKey(input.provider, plain);
       await ctx.db
         .update(userApiKeys)
         .set({ isValid: validation.valid, lastValidatedAt: new Date() })
-        .where(eq(userApiKeys.id, row.id));
+        .where(
+          and(eq(userApiKeys.userId, ctx.user.id), eq(userApiKeys.provider, input.provider)),
+        );
       if (!validation.valid) {
         throw new TRPCError({
           code: "BAD_REQUEST",

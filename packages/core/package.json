@@ -9,7 +9,9 @@
     ".": "./src/index.ts",
     "./crypto": "./src/crypto.ts",
     "./key-validators": "./src/key-validators.ts",
-    "./filters": "./src/filters.ts"
+    "./filters": "./src/filters.ts",
+    "./search": "./src/search.ts",
+    "./search-types": "./src/search-types.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

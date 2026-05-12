@@ -32,3 +32,41 @@ export const defaultFilters: WorkspaceFilters = {
   balance: "mixed",
   freshness: "any",
 };
+
+/** RFC 3339 lower bound for `freshness`, or `null` for "any time". */
+export function freshnessToPublishedAfter(value: WorkspaceFilters["freshness"]): string | null {
+  if (value === "any") return null;
+  const now = Date.now();
+  const months = value === "6m" ? 6 : value === "1y" ? 12 : 24;
+  const cutoff = new Date(now - months * 30 * 24 * 60 * 60 * 1000);
+  return cutoff.toISOString();
+}
+
+/** Brave's freshness param — `pd|pw|pm|py` or an absolute range for sub-year windows. */
+export function freshnessToBraveParam(value: WorkspaceFilters["freshness"]): string | null {
+  if (value === "any") return null;
+  if (value === "6m") {
+    const end = new Date();
+    const start = new Date(end.getTime() - 6 * 30 * 24 * 60 * 60 * 1000);
+    return `${braveDate(start)}to${braveDate(end)}`;
+  }
+  return "py"; // Brave caps at past-year for both 1y and 2y.
+}
+
+/** YouTube's `videoDuration` accepts our short/medium/long verbatim. */
+export function durationToYouTubeParam(value: WorkspaceFilters["duration"]): string {
+  return value;
+}
+
+export function providersForBalance(value: WorkspaceFilters["balance"]): Array<"youtube" | "brave"> {
+  if (value === "video") return ["youtube"];
+  if (value === "text") return ["brave"];
+  return ["youtube", "brave"];
+}
+
+function braveDate(d: Date): string {
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
