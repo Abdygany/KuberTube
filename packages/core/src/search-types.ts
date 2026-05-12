@@ -16,4 +16,9 @@ export interface ResourceCandidate {
 export interface ProviderError {
   provider: SearchProvider;
   reason: string;
+  /**
+   * `true` for 401/403/429 — caller should back off and cache the
+   * failure briefly so a Refresh click doesn't burn through quota.
+   */
+  persistent: boolean;
 }

@@ -8,7 +8,8 @@ export interface DisplayResource {
   title: string;
   description?: string | null;
   url: string;
-  source: "youtube" | "web";
+  /** SearchProvider for suggestions; DB source for saved rows. Both forms accepted. */
+  source: "youtube" | "brave" | "web";
   type: "video" | "article";
   thumbnailUrl?: string | null;
   durationSeconds?: number | null;
@@ -16,35 +17,39 @@ export interface DisplayResource {
   metadata?: Record<string, unknown> | null;
 }
 
-export interface ResourceCardProps {
+interface BaseProps {
   resource: DisplayResource;
-  variant: "suggestion" | "saved";
-  isSaved?: boolean;
-  isCompleted?: boolean;
   busy?: boolean;
-  onAdd?: () => void;
-  onRemove?: () => void;
-  onToggleCompleted?: () => void;
 }
 
-export function ResourceCard({
-  resource,
-  variant,
-  isSaved,
-  isCompleted,
-  busy,
-  onAdd,
-  onRemove,
-  onToggleCompleted,
-}: ResourceCardProps) {
+interface SuggestionProps extends BaseProps {
+  variant: "suggestion";
+  isSaved: boolean;
+  onAdd: () => void;
+}
+
+interface SavedProps extends BaseProps {
+  variant: "saved";
+  isCompleted: boolean;
+  onOpen?: () => void;
+  onRemove: () => void;
+  onToggleCompleted: () => void;
+}
+
+export type ResourceCardProps = SuggestionProps | SavedProps;
+
+export function ResourceCard(props: ResourceCardProps) {
+  const { resource, busy } = props;
   const isVideo = resource.type === "video";
   const duration = isVideo && resource.durationSeconds ? formatDuration(resource.durationSeconds) : null;
   const published = resource.publishedAt ? new Date(resource.publishedAt) : null;
-  const domain = resource.source === "web" ? domainFromMetadataOrUrl(resource) : null;
   const channel =
     resource.source === "youtube" && typeof resource.metadata?.channelTitle === "string"
       ? resource.metadata.channelTitle
       : null;
+  const domain = resource.source !== "youtube" ? domainFromMetadataOrUrl(resource) : null;
+  const sourceLabel = resource.source === "youtube" ? "YouTube" : "Web";
+  const isCompleted = props.variant === "saved" ? props.isCompleted : false;
 
   return (
     <article
@@ -93,7 +98,7 @@ export function ResourceCard({
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted">
           <span className="inline-flex items-center gap-1">
             {isVideo ? <Play className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-            {resource.source === "youtube" ? "YouTube" : "Web"}
+            {sourceLabel}
           </span>
           {channel ? <span>· {channel}</span> : null}
           {domain ? <span>· {domain}</span> : null}
@@ -101,14 +106,14 @@ export function ResourceCard({
         </div>
 
         <div className="flex items-center gap-2 pt-1">
-          {variant === "suggestion" ? (
+          {props.variant === "suggestion" ? (
             <Button
-              variant={isSaved ? "secondary" : "primary"}
-              onClick={onAdd}
-              disabled={busy || isSaved}
+              variant={props.isSaved ? "secondary" : "primary"}
+              onClick={props.onAdd}
+              disabled={busy || props.isSaved}
               className="h-8 px-2 text-xs"
             >
-              {isSaved ? (
+              {props.isSaved ? (
                 <>
                   <Check className="mr-1 h-3 w-3" />
                   In workspace
@@ -122,18 +127,23 @@ export function ResourceCard({
             </Button>
           ) : (
             <>
+              {props.onOpen ? (
+                <Button onClick={props.onOpen} disabled={busy} className="h-8 px-2 text-xs">
+                  Open
+                </Button>
+              ) : null}
               <Button
                 variant="secondary"
-                onClick={onToggleCompleted}
+                onClick={props.onToggleCompleted}
                 disabled={busy}
                 className="h-8 px-2 text-xs"
               >
-                <Check className={cn("mr-1 h-3 w-3", isCompleted && "text-emerald-600")} />
-                {isCompleted ? "Completed" : "Mark complete"}
+                <Check className={cn("mr-1 h-3 w-3", props.isCompleted && "text-emerald-600")} />
+                {props.isCompleted ? "Completed" : "Mark complete"}
               </Button>
               <Button
                 variant="ghost"
-                onClick={onRemove}
+                onClick={props.onRemove}
                 disabled={busy}
                 className="h-8 px-2 text-xs"
               >

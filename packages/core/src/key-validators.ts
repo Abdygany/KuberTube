@@ -1,3 +1,5 @@
+import "server-only";
+
 import { z } from "zod";
 
 export const providerSchema = z.enum(["youtube", "brave", "anthropic"]);

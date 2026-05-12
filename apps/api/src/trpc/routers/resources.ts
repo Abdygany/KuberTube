@@ -5,18 +5,48 @@ import { resources, workspaces, type Database } from "@kubertube/db";
 import { canonicalUrl } from "@kubertube/core";
 import { protectedProcedure, router } from "../trpc";
 
+const httpsUrl = z
+  .string()
+  .url()
+  .refine((value) => {
+    try {
+      const proto = new URL(value).protocol;
+      return proto === "http:" || proto === "https:";
+    } catch {
+      return false;
+    }
+  }, "Only http(s) URLs are accepted");
+
 const candidateSchema = z.object({
-  url: z.string().url(),
+  url: httpsUrl,
   type: z.enum(["video", "article"]),
   /** SearchProvider from @kubertube/core: youtube|brave. Mapped to DB source. */
   source: z.enum(["youtube", "brave"]),
   title: z.string().min(1).max(500),
   description: z.string().max(8000).nullable().optional(),
-  thumbnailUrl: z.string().url().nullable().optional(),
+  thumbnailUrl: httpsUrl.nullable().optional(),
   durationSeconds: z.number().int().nonnegative().nullable().optional(),
   publishedAt: z.string().datetime().nullable().optional(),
   metadata: z.record(z.unknown()).optional(),
 });
+
+const RESOURCE_SELECT = {
+  id: resources.id,
+  workspaceId: resources.workspaceId,
+  url: resources.url,
+  type: resources.type,
+  source: resources.source,
+  title: resources.title,
+  description: resources.description,
+  thumbnailUrl: resources.thumbnailUrl,
+  durationSeconds: resources.durationSeconds,
+  publishedAt: resources.publishedAt,
+  metadata: resources.metadataJson,
+  savedAt: resources.savedAt,
+  lastOpenedAt: resources.lastOpenedAt,
+  progressSeconds: resources.progressSeconds,
+  isCompleted: resources.isCompleted,
+} as const;
 
 function toResourceSource(provider: "youtube" | "brave"): "youtube" | "web" {
   return provider === "youtube" ? "youtube" : "web";
@@ -43,25 +73,9 @@ export const resourcesRouter = router({
     .query(async ({ ctx, input }) => {
       await assertOwnsWorkspace(ctx.db, ctx.user.id, input.workspaceId);
       return ctx.db
-        .select({
-          id: resources.id,
-          url: resources.url,
-          type: resources.type,
-          source: resources.source,
-          title: resources.title,
-          description: resources.description,
-          thumbnailUrl: resources.thumbnailUrl,
-          durationSeconds: resources.durationSeconds,
-          publishedAt: resources.publishedAt,
-          savedAt: resources.savedAt,
-          lastOpenedAt: resources.lastOpenedAt,
-          progressSeconds: resources.progressSeconds,
-          isCompleted: resources.isCompleted,
-        })
+        .select(RESOURCE_SELECT)
         .from(resources)
-        .where(
-          and(eq(resources.workspaceId, input.workspaceId), isNull(resources.deletedAt)),
-        )
+        .where(and(eq(resources.workspaceId, input.workspaceId), isNull(resources.deletedAt)))
         .orderBy(desc(resources.savedAt));
     }),
 
@@ -69,12 +83,18 @@ export const resourcesRouter = router({
    * Idempotent add. If the URL exists in the workspace:
    * - and is live → returns the existing row (no scolding popup);
    * - and is soft-deleted → restores it.
+   *
+   * The URL is canonicalized; non-http(s) schemes are rejected upstream
+   * by `httpsUrl` and would never reach this handler.
    */
   add: protectedProcedure
     .input(z.object({ workspaceId: z.string().uuid(), candidate: candidateSchema }))
     .mutation(async ({ ctx, input }) => {
       await assertOwnsWorkspace(ctx.db, ctx.user.id, input.workspaceId);
       const url = canonicalUrl(input.candidate.url);
+      if (!url) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Resource URL is invalid" });
+      }
       const publishedAt = input.candidate.publishedAt
         ? new Date(input.candidate.publishedAt)
         : null;
@@ -100,10 +120,15 @@ export const resourcesRouter = router({
               savedAt: new Date(),
             })
             .where(eq(resources.id, existing.id))
-            .returning();
+            .returning(RESOURCE_SELECT);
           return restored!;
         }
-        return existing;
+        const [refreshed] = await ctx.db
+          .select(RESOURCE_SELECT)
+          .from(resources)
+          .where(eq(resources.id, existing.id))
+          .limit(1);
+        return refreshed!;
       }
 
       const [created] = await ctx.db
@@ -120,7 +145,7 @@ export const resourcesRouter = router({
           publishedAt,
           metadataJson: input.candidate.metadata ?? {},
         })
-        .returning();
+        .returning(RESOURCE_SELECT);
       return created!;
     }),
 

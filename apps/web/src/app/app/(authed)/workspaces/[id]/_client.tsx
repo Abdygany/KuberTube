@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  AlertTriangle,
-  FileText,
-  RefreshCw,
-  Search,
-  Trash2,
-  Video,
-} from "lucide-react";
+import { AlertTriangle, FileText, RefreshCw, Search, Trash2, Video } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -15,7 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ResourceCard, type DisplayResource } from "@/components/resources/resource-card";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
-import { defaultFilters, workspaceFiltersSchema, type WorkspaceFilters } from "@kubertube/core/filters";
+import {
+  defaultFilters,
+  workspaceFiltersSchema,
+  type WorkspaceFilters,
+} from "@kubertube/core/filters";
 import type { ResourceCandidate } from "@kubertube/core/search-types";
 
 interface InitialWorkspace {
@@ -29,14 +26,52 @@ interface InitialWorkspace {
 
 export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
   const router = useRouter();
+  const utils = trpc.useUtils();
   const filters: WorkspaceFilters =
     workspaceFiltersSchema.safeParse(initial.filtersJson).data ?? defaultFilters;
 
   const saved = trpc.resources.listByWorkspace.useQuery({ workspaceId: initial.id });
   const search = trpc.search.run.useMutation();
-  const add = trpc.resources.add.useMutation();
-  const remove = trpc.resources.softDelete.useMutation();
-  const markComplete = trpc.resources.markCompleted.useMutation();
+
+  const add = trpc.resources.add.useMutation({
+    onSuccess: (row) => {
+      utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, (prev) => {
+        const list = prev ?? [];
+        if (list.some((r) => r.id === row.id)) return list;
+        return [row, ...list];
+      });
+    },
+  });
+  const remove = trpc.resources.softDelete.useMutation({
+    onMutate: async ({ id }) => {
+      await utils.resources.listByWorkspace.cancel({ workspaceId: initial.id });
+      const previous = utils.resources.listByWorkspace.getData({ workspaceId: initial.id });
+      utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, (list) =>
+        (list ?? []).filter((r) => r.id !== id),
+      );
+      return { previous };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.previous) {
+        utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, ctx.previous);
+      }
+    },
+  });
+  const markComplete = trpc.resources.markCompleted.useMutation({
+    onMutate: async ({ id, isCompleted }) => {
+      await utils.resources.listByWorkspace.cancel({ workspaceId: initial.id });
+      const previous = utils.resources.listByWorkspace.getData({ workspaceId: initial.id });
+      utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, (list) =>
+        (list ?? []).map((r) => (r.id === id ? { ...r, isCompleted } : r)),
+      );
+      return { previous };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.previous) {
+        utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, ctx.previous);
+      }
+    },
+  });
   const softDeleteWorkspace = trpc.workspaces.softDelete.useMutation({
     onSuccess: () => {
       router.replace("/app");
@@ -55,19 +90,8 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
     await search.mutateAsync({ workspaceId: initial.id, force });
   }
 
-  async function onAdd(candidate: ResourceCandidate) {
-    await add.mutateAsync({ workspaceId: initial.id, candidate });
-    await saved.refetch();
-  }
-
-  async function onRemove(id: string) {
-    await remove.mutateAsync({ id });
-    await saved.refetch();
-  }
-
-  async function onToggleCompleted(id: string, current: boolean) {
-    await markComplete.mutateAsync({ id, isCompleted: !current });
-    await saved.refetch();
+  function candidateToDisplay(candidate: ResourceCandidate): DisplayResource {
+    return { ...candidate };
   }
 
   return (
@@ -121,9 +145,7 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
         )}
       </div>
 
-      {search.error ? (
-        <SearchErrorBanner message={search.error.message} />
-      ) : null}
+      {search.error ? <SearchErrorBanner message={search.error.message} /> : null}
       {search.data && search.data.errors.length > 0 ? (
         <PartialSuccessBanner errors={search.data.errors} />
       ) : null}
@@ -137,11 +159,13 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
           {search.data.results.map((candidate) => (
             <ResourceCard
               key={`${candidate.source}:${candidate.url}`}
-              resource={candidate as DisplayResource}
+              resource={candidateToDisplay(candidate)}
               variant="suggestion"
               isSaved={savedUrls.has(candidate.url)}
               busy={add.isPending}
-              onAdd={() => onAdd(candidate)}
+              onAdd={() =>
+                add.mutate({ workspaceId: initial.id, candidate })
+              }
             />
           ))}
         </Section>
@@ -164,12 +188,17 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
         {(saved.data ?? []).map((resource) => (
           <ResourceCard
             key={resource.id}
-            resource={resource as DisplayResource}
+            resource={resource}
             variant="saved"
             isCompleted={resource.isCompleted}
             busy={remove.isPending || markComplete.isPending}
-            onRemove={() => onRemove(resource.id)}
-            onToggleCompleted={() => onToggleCompleted(resource.id, resource.isCompleted)}
+            onOpen={() =>
+              router.push(`/app/workspaces/${initial.id}/resources/${resource.id}`)
+            }
+            onRemove={() => remove.mutate({ id: resource.id })}
+            onToggleCompleted={() =>
+              markComplete.mutate({ id: resource.id, isCompleted: !resource.isCompleted })
+            }
           />
         ))}
       </Section>
@@ -226,8 +255,8 @@ function PartialSuccessBanner({
 }) {
   return (
     <div className="mt-4 space-y-1 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-200">
-      {errors.map((err) => (
-        <div key={err.provider} className="flex items-start gap-2">
+      {errors.map((err, index) => (
+        <div key={`${err.provider}:${index}`} className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             <strong className="capitalize">{err.provider}</strong>: {err.reason}
