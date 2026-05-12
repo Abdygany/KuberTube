@@ -7,6 +7,7 @@ import {
   freshnessToPublishedAfter,
   type WorkspaceFilters,
 } from "./filters";
+import { decodeHtmlEntities, stripHtmlTags } from "./html";
 import type { ProviderError, ResourceCandidate, SearchProvider } from "./search-types";
 
 export type { ProviderError, ResourceCandidate, SearchProvider };
@@ -383,25 +384,3 @@ export function parseIsoDuration(value: string | undefined | null): number | nul
   return Number.isFinite(total) && total > 0 ? total : null;
 }
 
-const ENTITY_MAP: Record<string, string> = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  "#39": "'",
-};
-
-function decodeHtmlEntities(input: string): string {
-  return input.replace(/&([a-zA-Z]+|#\d+);/g, (_, name: string) => {
-    if (name.startsWith("#")) {
-      const code = Number(name.slice(1));
-      return Number.isFinite(code) ? String.fromCharCode(code) : `&${name};`;
-    }
-    return ENTITY_MAP[name] ?? `&${name};`;
-  });
-}
-
-function stripHtmlTags(input: string): string {
-  return input.replace(/<\/?[^>]+>/g, "");
-}

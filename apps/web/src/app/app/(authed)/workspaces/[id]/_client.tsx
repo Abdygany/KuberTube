@@ -94,23 +94,22 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
     return { ...candidate };
   }
 
-  const exportQuery = trpc.workspaces.exportMarkdown.useQuery(
-    { id: initial.id },
-    { enabled: false },
-  );
+  const exportMutation = trpc.workspaces.exportMarkdown.useMutation({
+    onSuccess: (data) => {
+      const blob = new Blob([data.markdown], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+  });
 
-  async function exportToMarkdown() {
-    const result = await exportQuery.refetch();
-    if (!result.data) return;
-    const blob = new Blob([result.data.markdown], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.data.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  function exportToMarkdown() {
+    exportMutation.mutate({ id: initial.id });
   }
 
   return (
@@ -138,9 +137,9 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
           </Button>
         ) : null}
         {(saved.data?.length ?? 0) > 0 ? (
-          <Button variant="secondary" onClick={exportToMarkdown} disabled={exportQuery.isFetching}>
+          <Button variant="secondary" onClick={exportToMarkdown} disabled={exportMutation.isPending}>
             <Download className="mr-1.5 h-4 w-4" />
-            {exportQuery.isFetching ? "Exporting..." : "Export"}
+            {exportMutation.isPending ? "Exporting..." : "Export"}
           </Button>
         ) : null}
         <span className="ml-auto" />
@@ -173,6 +172,11 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
       {search.error ? <SearchErrorBanner message={search.error.message} /> : null}
       {search.data && search.data.errors.length > 0 ? (
         <PartialSuccessBanner errors={search.data.errors} />
+      ) : null}
+      {exportMutation.error ? (
+        <p className="mt-3 text-xs text-red-600 dark:text-red-400">
+          Export failed: {exportMutation.error.message}
+        </p>
       ) : null}
 
       {search.data ? (

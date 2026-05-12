@@ -4,9 +4,10 @@ import { Clock, Trash2 } from "lucide-react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import Link from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatSeconds } from "@/lib/format";
+import { useDebounced } from "@/lib/hooks/use-debounced";
 import { trpc } from "@/lib/trpc/react";
 
 export interface NotesEditorProps {
@@ -194,22 +195,6 @@ function TimecodeNote({
         placeholder="What did you notice at this timestamp?"
       />
     </li>
-  );
-}
-
-function useDebounced<TArgs extends readonly unknown[]>(
-  fn: (...args: TArgs) => void,
-  ms: number,
-): (...args: TArgs) => void {
-  const fnRef = useRef(fn);
-  fnRef.current = fn;
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  return useCallback(
-    (...args: TArgs) => {
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => fnRef.current(...args), ms);
-    },
-    [ms],
   );
 }
 

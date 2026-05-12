@@ -2,17 +2,13 @@
 
 import { Search, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced";
 import { trpc } from "@/lib/trpc/react";
 
 export function SavedSearch() {
   const [query, setQuery] = useState("");
-  const [debounced, setDebounced] = useState("");
-
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(query.trim()), 300);
-    return () => clearTimeout(id);
-  }, [query]);
+  const debounced = useDebouncedValue(query.trim(), 300);
 
   const enabled = debounced.length >= 2;
   const results = trpc.search.savedContent.useQuery(

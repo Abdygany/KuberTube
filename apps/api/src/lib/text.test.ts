@@ -54,4 +54,15 @@ describe("truncateAtBoundary", () => {
     expect(result.truncated).toBe(true);
     expect(result.text.endsWith(". ")).toBe(true);
   });
+
+  it("does not return empty when maxChars < 500 and a boundary exists", () => {
+    // Regression: earlier code computed `hard.length - 500` directly,
+    // produced a negative offset, and returned ""; now Math.max(0, …)
+    // clamps and we return the full prefix.
+    const text = "Short. With a few. Sentence boundaries. Trailing tail that is dropped.";
+    const result = truncateAtBoundary(text, 50);
+    expect(result.truncated).toBe(true);
+    expect(result.text.length).toBeGreaterThan(0);
+    expect(result.text.length).toBeLessThanOrEqual(50);
+  });
 });

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { resources, resourceSummaries, workspaces, type Database } from "@kubertube/db";
 import { callAnthropicMessages, DEFAULT_SUMMARY_MODEL } from "../../lib/anthropic";
+import { renderMarkdownToSafeHtml } from "../../lib/markdown";
 import { parseArticle } from "../../lib/reader";
 import { htmlToPlainText, truncateAtBoundary } from "../../lib/text";
 import { decryptUserKey } from "../keys-helper";
@@ -100,7 +101,7 @@ export const summariesRouter = router({
     .input(z.object({ resourceId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       await loadResource(ctx.db, ctx.user.id, input.resourceId);
-      return ctx.db
+      const rows = await ctx.db
         .select({
           id: resourceSummaries.id,
           summaryType: resourceSummaries.summaryType,
@@ -112,6 +113,10 @@ export const summariesRouter = router({
         .from(resourceSummaries)
         .where(eq(resourceSummaries.resourceId, input.resourceId))
         .orderBy(desc(resourceSummaries.createdAt));
+      return rows.map((row) => ({
+        ...row,
+        contentHtml: renderMarkdownToSafeHtml(row.contentMd),
+      }));
     }),
 
   /**
@@ -157,7 +162,7 @@ export const summariesRouter = router({
           tokensUsed: totalTokens,
         })
         .returning();
-      return row!;
+      return { ...row!, contentHtml: renderMarkdownToSafeHtml(row!.contentMd) };
     }),
 
   delete: protectedProcedure

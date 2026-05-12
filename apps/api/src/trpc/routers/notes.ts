@@ -2,6 +2,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { notes, resources, workspaces, type Database } from "@kubertube/db";
+import { sanitizeNoteHtml } from "../../lib/markdown";
 import { protectedProcedure, router } from "../trpc";
 
 async function assertOwnsResource(db: Database, userId: string, resourceId: string) {
@@ -74,11 +75,15 @@ export const notesRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // TipTap sanitizes client-side, but a malicious client can POST raw
+      // HTML directly. Sanitize on the server so storage is trustworthy.
+      const sanitized = sanitizeNoteHtml(input.contentMd);
+
       if (input.id) {
         await assertOwnsNote(ctx.db, ctx.user.id, input.id);
         const [updated] = await ctx.db
           .update(notes)
-          .set({ contentMd: input.contentMd, updatedAt: new Date() })
+          .set({ contentMd: sanitized, updatedAt: new Date() })
           .where(eq(notes.id, input.id))
           .returning();
         if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
@@ -103,7 +108,7 @@ export const notesRouter = router({
         if (existing) {
           const [updated] = await ctx.db
             .update(notes)
-            .set({ contentMd: input.contentMd, updatedAt: new Date() })
+            .set({ contentMd: sanitized, updatedAt: new Date() })
             .where(eq(notes.id, existing.id))
             .returning();
           return updated!;
@@ -114,7 +119,7 @@ export const notesRouter = router({
         .insert(notes)
         .values({
           resourceId: input.resourceId,
-          contentMd: input.contentMd,
+          contentMd: sanitized,
           timestampSeconds,
         })
         .returning();

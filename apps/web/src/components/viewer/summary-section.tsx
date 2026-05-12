@@ -1,7 +1,7 @@
 "use client";
 
 import { Sparkles, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc/react";
 
@@ -9,7 +9,12 @@ export function SummarySection({ resourceId }: { resourceId: string }) {
   const utils = trpc.useUtils();
   const summaries = trpc.summaries.byResource.useQuery({ resourceId });
   const create = trpc.summaries.create.useMutation({
-    onSuccess: () => utils.summaries.byResource.invalidate({ resourceId }),
+    onSuccess: (row) => {
+      utils.summaries.byResource.setData({ resourceId }, (prev) => {
+        if (!prev) return [row];
+        return [row, ...prev];
+      });
+    },
   });
   const remove = trpc.summaries.delete.useMutation({
     onMutate: async ({ id }) => {
@@ -27,20 +32,24 @@ export function SummarySection({ resourceId }: { resourceId: string }) {
     },
   });
 
-  const [debounceUntil, setDebounceUntil] = useState(0);
-  const busy = create.isPending || Date.now() < debounceUntil;
+  const [cooling, setCooling] = useState(false);
+  useEffect(() => {
+    if (!cooling) return;
+    const id = setTimeout(() => setCooling(false), 5_000);
+    return () => clearTimeout(id);
+  }, [cooling]);
+
+  const busy = create.isPending || cooling;
 
   function generate(type: "short" | "detailed") {
-    setDebounceUntil(Date.now() + 5_000);
+    setCooling(true);
     create.mutate({ resourceId, type });
   }
 
   return (
     <section className="mt-8 space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
-          AI summary
-        </h2>
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">AI summary</h2>
         <div className="flex gap-2">
           <Button onClick={() => generate("short")} disabled={busy} className="h-8 px-2 text-xs">
             <Sparkles className="mr-1 h-3 w-3" />
@@ -93,9 +102,10 @@ export function SummarySection({ resourceId }: { resourceId: string }) {
                 </button>
               </div>
             </header>
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-              {summary.contentMd}
-            </pre>
+            <div
+              className="reader-content"
+              dangerouslySetInnerHTML={{ __html: summary.contentHtml }}
+            />
           </article>
         ))}
       </div>

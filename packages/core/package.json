@@ -12,7 +12,10 @@
     "./filters": "./src/filters.ts",
     "./search": "./src/search.ts",
     "./search-types": "./src/search-types.ts",
-    "./url": "./src/url.ts"
+    "./url": "./src/url.ts",
+    "./format": "./src/format.ts",
+    "./html": "./src/html.ts",
+    "./slug": "./src/slug.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

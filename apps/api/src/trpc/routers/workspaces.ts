@@ -1,8 +1,10 @@
-import { and, asc, desc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { notes, resources, workspaces } from "@kubertube/db";
 import { workspaceFiltersSchema } from "@kubertube/core";
+import { formatSeconds } from "@kubertube/core/format";
+import { slugify } from "@kubertube/core/slug";
 import { htmlToMarkdown } from "../../lib/text";
 import { protectedProcedure, router } from "../trpc";
 
@@ -166,7 +168,7 @@ export const workspacesRouter = router({
    */
   exportMarkdown: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const [workspace] = await ctx.db
         .select({
           id: workspaces.id,
@@ -212,13 +214,12 @@ export const workspacesRouter = router({
               timestampSeconds: notes.timestampSeconds,
             })
             .from(notes)
-            .where(and(isNull(notes.deletedAt)))
+            .where(and(inArray(notes.resourceId, resourceIds), isNull(notes.deletedAt)))
             .orderBy(asc(notes.timestampSeconds), asc(notes.createdAt))
         : [];
 
       const notesByResource = new Map<string, typeof allNotes>();
       for (const note of allNotes) {
-        if (!resourceIds.includes(note.resourceId)) continue;
         const list = notesByResource.get(note.resourceId) ?? [];
         list.push(note);
         notesByResource.set(note.resourceId, list);
@@ -286,22 +287,3 @@ export const workspacesRouter = router({
       };
     }),
 });
-
-function formatSeconds(total: number): string {
-  const t = Math.max(0, Math.floor(total));
-  const h = Math.floor(t / 3600);
-  const m = Math.floor((t % 3600) / 60);
-  const s = t % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function slugify(title: string): string {
-  return (
-    title
-      .toLowerCase()
-      .replace(/[^a-z0-9а-яё]+/gi, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 60) || "workspace"
-  );
-}
