@@ -11,7 +11,8 @@
     "./key-validators": "./src/key-validators.ts",
     "./filters": "./src/filters.ts",
     "./search": "./src/search.ts",
-    "./search-types": "./src/search-types.ts"
+    "./search-types": "./src/search-types.ts",
+    "./url": "./src/url.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

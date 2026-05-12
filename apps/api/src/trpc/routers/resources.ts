@@ -3,28 +3,17 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { resources, workspaces, type Database } from "@kubertube/db";
 import { canonicalUrl } from "@kubertube/core";
+import { httpsUrlSchema } from "@kubertube/core/url";
 import { protectedProcedure, router } from "../trpc";
 
-const httpsUrl = z
-  .string()
-  .url()
-  .refine((value) => {
-    try {
-      const proto = new URL(value).protocol;
-      return proto === "http:" || proto === "https:";
-    } catch {
-      return false;
-    }
-  }, "Only http(s) URLs are accepted");
-
 const candidateSchema = z.object({
-  url: httpsUrl,
+  url: httpsUrlSchema,
   type: z.enum(["video", "article"]),
   /** SearchProvider from @kubertube/core: youtube|brave. Mapped to DB source. */
   source: z.enum(["youtube", "brave"]),
   title: z.string().min(1).max(500),
   description: z.string().max(8000).nullable().optional(),
-  thumbnailUrl: httpsUrl.nullable().optional(),
+  thumbnailUrl: httpsUrlSchema.nullable().optional(),
   durationSeconds: z.number().int().nonnegative().nullable().optional(),
   publishedAt: z.string().datetime().nullable().optional(),
   metadata: z.record(z.unknown()).optional(),
@@ -203,10 +192,6 @@ export const resourcesRouter = router({
         )
         .limit(1);
       if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-      void ctx.db
-        .update(resources)
-        .set({ lastOpenedAt: new Date() })
-        .where(eq(resources.id, input.id));
       return row;
     }),
 

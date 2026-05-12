@@ -3,6 +3,7 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useRef } from "react";
+import { extractYouTubeId } from "@kubertube/core/url";
 import { NotesEditor } from "@/components/viewer/notes-editor";
 import { ReaderView } from "@/components/viewer/reader-view";
 import { YouTubePlayer, type YouTubePlayerHandle } from "@/components/viewer/youtube-player";
@@ -35,9 +36,7 @@ export function ResourceViewer({
   const playerRef = useRef<YouTubePlayerHandle | null>(null);
 
   const videoId =
-    resource.type === "video"
-      ? extractYouTubeId(resource.url, resource.metadata)
-      : null;
+    resource.type === "video" ? extractYouTubeId(resource.url, resource.metadata) : null;
 
   const handleProgress = useCallback(
     (seconds: number, kind: "tick" | "pause" | "end") => {
@@ -107,23 +106,4 @@ export function ResourceViewer({
       </div>
     </div>
   );
-}
-
-function extractYouTubeId(url: string, metadata: unknown): string | null {
-  if (typeof metadata === "object" && metadata !== null && "videoId" in metadata) {
-    const id = (metadata as { videoId?: unknown }).videoId;
-    if (typeof id === "string" && /^[A-Za-z0-9_-]{11}$/.test(id)) return id;
-  }
-  try {
-    const u = new URL(url);
-    if (u.hostname === "youtu.be") {
-      const id = u.pathname.slice(1);
-      return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null;
-    }
-    const v = u.searchParams.get("v");
-    if (v && /^[A-Za-z0-9_-]{11}$/.test(v)) return v;
-    return null;
-  } catch {
-    return null;
-  }
 }

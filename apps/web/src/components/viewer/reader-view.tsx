@@ -15,8 +15,10 @@ export function ReaderView({ url, resourceId }: Props) {
   const parse = trpc.reader.parse.useQuery({ url });
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  const didRestoreRef = useRef(false);
   useLayoutEffect(() => {
-    if (!parse.data || !containerRef.current) return;
+    if (didRestoreRef.current || !parse.data || !containerRef.current) return;
+    didRestoreRef.current = true;
     const stored = localStorage.getItem(SCROLL_KEY(resourceId));
     if (stored) {
       const y = Number(stored);

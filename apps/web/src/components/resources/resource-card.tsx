@@ -2,6 +2,7 @@
 
 import { Check, ExternalLink, FileText, Play, Plus, Trash2, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatSeconds } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export interface DisplayResource {
@@ -41,7 +42,7 @@ export type ResourceCardProps = SuggestionProps | SavedProps;
 export function ResourceCard(props: ResourceCardProps) {
   const { resource, busy } = props;
   const isVideo = resource.type === "video";
-  const duration = isVideo && resource.durationSeconds ? formatDuration(resource.durationSeconds) : null;
+  const duration = isVideo && resource.durationSeconds ? formatSeconds(resource.durationSeconds) : null;
   const published = resource.publishedAt ? new Date(resource.publishedAt) : null;
   const channel =
     resource.source === "youtube" && typeof resource.metadata?.channelTitle === "string"
@@ -156,16 +157,6 @@ export function ResourceCard(props: ResourceCardProps) {
       </div>
     </article>
   );
-}
-
-function formatDuration(total: number): string {
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  }
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 function domainFromMetadataOrUrl(resource: DisplayResource): string | null {
