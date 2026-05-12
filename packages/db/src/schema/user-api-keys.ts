@@ -8,9 +8,10 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { providerSchema } from "@kubertube/core/key-validators";
 import { users } from "./users";
 
-export const providerEnum = pgEnum("api_provider", ["youtube", "brave", "anthropic"]);
+export const providerEnum = pgEnum("api_provider", providerSchema.options);
 
 export const userApiKeys = pgTable(
   "user_api_keys",

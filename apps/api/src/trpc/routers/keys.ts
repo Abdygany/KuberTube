@@ -3,23 +3,19 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { userApiKeys } from "@kubertube/db";
 import {
+  apiKeyAad,
+  CURRENT_KEY_VERSION,
   decryptSecret,
   encryptSecret,
   maskLast4,
+  providerSchema,
   validateKey,
-  type Provider,
 } from "@kubertube/core";
 import { protectedProcedure, router } from "../trpc";
 
-const providerSchema = z.enum(["youtube", "brave", "anthropic"]);
-
-function aad(userId: string, provider: Provider): string {
-  return `kubertube:v1:${userId}:${provider}`;
-}
-
 export const keysRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
-    const rows = await ctx.db
+    return ctx.db
       .select({
         id: userApiKeys.id,
         provider: userApiKeys.provider,
@@ -31,7 +27,6 @@ export const keysRouter = router({
       })
       .from(userApiKeys)
       .where(eq(userApiKeys.userId, ctx.user.id));
-    return rows;
   }),
 
   set: protectedProcedure
@@ -49,27 +44,31 @@ export const keysRouter = router({
           message: validation.reason ?? "Key validation failed",
         });
       }
-      const encrypted = encryptSecret(input.key, ctx.masterKey, aad(ctx.user.id, input.provider));
       const now = new Date();
+      const values = {
+        userId: ctx.user.id,
+        provider: input.provider,
+        encryptedKey: encryptSecret(
+          input.key,
+          ctx.masterKey,
+          apiKeyAad(ctx.user.id, input.provider),
+        ),
+        keyLast4: maskLast4(input.key),
+        keyVersion: CURRENT_KEY_VERSION,
+        isValid: true,
+        lastValidatedAt: now,
+      };
       await ctx.db
         .insert(userApiKeys)
-        .values({
-          userId: ctx.user.id,
-          provider: input.provider,
-          encryptedKey: encrypted,
-          keyLast4: maskLast4(input.key),
-          keyVersion: "v1",
-          isValid: true,
-          lastValidatedAt: now,
-        })
+        .values(values)
         .onConflictDoUpdate({
           target: [userApiKeys.userId, userApiKeys.provider],
           set: {
-            encryptedKey: encrypted,
-            keyLast4: maskLast4(input.key),
-            keyVersion: "v1",
-            isValid: true,
-            lastValidatedAt: now,
+            encryptedKey: values.encryptedKey,
+            keyLast4: values.keyLast4,
+            keyVersion: values.keyVersion,
+            isValid: values.isValid,
+            lastValidatedAt: values.lastValidatedAt,
           },
         });
       return { ok: true as const };
@@ -104,7 +103,7 @@ export const keysRouter = router({
         plain = decryptSecret(
           row.encryptedKey,
           ctx.masterKey,
-          aad(ctx.user.id, input.provider),
+          apiKeyAad(ctx.user.id, input.provider),
         );
       } catch {
         await ctx.db

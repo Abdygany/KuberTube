@@ -18,6 +18,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@kubertube/core": "workspace:*",
     "drizzle-orm": "^0.35.3",
     "pg": "^8.13.0"
   },

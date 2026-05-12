@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc/react";
-import { workspaceFiltersSchema, type WorkspaceFilters } from "@kubertube/core/filters";
+import { cn } from "@/lib/utils";
+import {
+  defaultFilters,
+  workspaceFiltersSchema,
+  type WorkspaceFilters,
+} from "@kubertube/core/filters";
 
 interface InitialWorkspace {
   id: string;
@@ -18,17 +23,7 @@ interface InitialWorkspace {
 
 export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
   const router = useRouter();
-  const filters: WorkspaceFilters = (() => {
-    const parsed = workspaceFiltersSchema.safeParse(initial.filtersJson);
-    return parsed.success
-      ? parsed.data
-      : {
-          level: "beginner",
-          duration: "medium",
-          balance: "mixed",
-          freshness: "any",
-        };
-  })();
+  const filters: WorkspaceFilters = workspaceFiltersSchema.safeParse(initial.filtersJson).data ?? defaultFilters;
 
   const softDelete = trpc.workspaces.softDelete.useMutation({
     onSuccess: () => {
@@ -43,9 +38,7 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
     <div className="mx-auto max-w-3xl px-6 py-10">
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">{initial.title}</h1>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted">
-          {initial.goal}
-        </p>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted">{initial.goal}</p>
         <div className="flex flex-wrap gap-2 text-xs text-muted">
           <Chip>{filters.level}</Chip>
           <Chip>{filters.duration}</Chip>
@@ -107,7 +100,12 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
 
 function Chip({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-card px-1.5 py-0.5 text-[11px] uppercase tracking-wide">
+    <span
+      className={cn(
+        "inline-flex items-center rounded-sm border border-border bg-card px-1.5 py-0.5 text-[11px] uppercase tracking-wide",
+        icon && "gap-1",
+      )}
+    >
       {icon}
       {children}
     </span>

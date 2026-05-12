@@ -1,19 +1,14 @@
+import { THEME_STORAGE_KEY } from "@/lib/theme";
+
 /**
- * Inline script that sets `html.dark` before React hydrates, so the
- * initial paint already matches the stored / system preference. Reads
- * `localStorage["kubertube:theme"]` (`light` | `dark` | `system`).
- * Persistence to `user_settings.uiTheme` lands in Phase 4 polish.
+ * Sets `html.dark` before React hydrates so the first paint matches
+ * the stored / system preference. The inline script can't import the
+ * shared module, so the storage key is interpolated to keep both
+ * sides in sync.
  */
 export function ThemeBootstrap() {
-  const script = `
-    (function () {
-      try {
-        var stored = localStorage.getItem("kubertube:theme") || "system";
-        var system = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        var dark = stored === "dark" || (stored === "system" && system);
-        document.documentElement.classList.toggle("dark", dark);
-      } catch (_) {}
-    })();
-  `;
+  const script = `(function(){try{var s=localStorage.getItem(${JSON.stringify(
+    THEME_STORAGE_KEY,
+  )})||"system";var d=s==="dark"||(s==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d)}catch(e){}})();`;
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 }

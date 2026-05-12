@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { users } from "@kubertube/db";
+import { userSettings, users } from "@kubertube/db";
 import { protectedProcedure, router } from "../trpc";
 
 export const userRouter = router({
@@ -10,6 +10,46 @@ export const userRouter = router({
       id: ctx.user.id,
       email: ctx.user.email,
       name: ctx.user.name ?? null,
+    };
+  }),
+
+  /**
+   * Single-roundtrip fetch for the authenticated app shell:
+   * profile identity + the settings row (auto-created if missing).
+   * Callers should prefer this over separate user.me + settings.get
+   * to avoid two sequential DB hits per page render.
+   */
+  bootstrap: protectedProcedure.query(async ({ ctx }) => {
+    const existing = await ctx.db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, ctx.user.id))
+      .limit(1);
+    let settings = existing[0];
+    if (!settings) {
+      const [created] = await ctx.db
+        .insert(userSettings)
+        .values({ userId: ctx.user.id })
+        .onConflictDoNothing({ target: userSettings.userId })
+        .returning();
+      if (created) {
+        settings = created;
+      } else {
+        const [row] = await ctx.db
+          .select()
+          .from(userSettings)
+          .where(eq(userSettings.userId, ctx.user.id))
+          .limit(1);
+        settings = row!;
+      }
+    }
+    return {
+      me: {
+        id: ctx.user.id,
+        email: ctx.user.email,
+        name: ctx.user.name ?? null,
+      },
+      settings,
     };
   }),
 

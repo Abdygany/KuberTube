@@ -1,10 +1,16 @@
 import { boolean, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  balanceSchema,
+  durationSchema,
+  freshnessSchema,
+  levelSchema,
+} from "@kubertube/core/filters";
 import { users } from "./users";
 
-export const levelEnum = pgEnum("user_level", ["beginner", "intermediate", "advanced"]);
-export const durationEnum = pgEnum("user_duration", ["short", "medium", "long"]);
-export const balanceEnum = pgEnum("user_balance", ["video", "text", "mixed"]);
-export const freshnessEnum = pgEnum("user_freshness", ["any", "6m", "1y", "2y"]);
+export const levelEnum = pgEnum("user_level", levelSchema.options);
+export const durationEnum = pgEnum("user_duration", durationSchema.options);
+export const balanceEnum = pgEnum("user_balance", balanceSchema.options);
+export const freshnessEnum = pgEnum("user_freshness", freshnessSchema.options);
 export const themeEnum = pgEnum("ui_theme", ["light", "dark", "system"]);
 
 export const userSettings = pgTable("user_settings", {

@@ -39,7 +39,14 @@ export const workspacesRouter = router({
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const [row] = await ctx.db
-        .select()
+        .select({
+          id: workspaces.id,
+          title: workspaces.title,
+          goal: workspaces.goal,
+          filtersJson: workspaces.filtersJson,
+          createdAt: workspaces.createdAt,
+          lastOpenedAt: workspaces.lastOpenedAt,
+        })
         .from(workspaces)
         .where(
           and(

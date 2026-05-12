@@ -2,45 +2,49 @@
 
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc/react";
-import { defaultFilters, type WorkspaceFilters } from "@kubertube/core/filters";
-
-const LEVELS: WorkspaceFilters["level"][] = ["beginner", "intermediate", "advanced"];
-const DURATIONS: WorkspaceFilters["duration"][] = ["short", "medium", "long"];
-const BALANCES: WorkspaceFilters["balance"][] = ["video", "text", "mixed"];
-const FRESHNESS: WorkspaceFilters["freshness"][] = ["any", "2y", "1y", "6m"];
+import {
+  balanceSchema,
+  defaultFilters,
+  durationSchema,
+  freshnessSchema,
+  levelSchema,
+  type WorkspaceFilters,
+} from "@kubertube/core/filters";
 
 export default function NewWorkspacePage() {
-  const router = useRouter();
   const settings = trpc.settings.get.useQuery();
+  if (!settings.data) {
+    return <p className="mx-auto max-w-xl px-6 py-10 text-sm text-muted">Loading...</p>;
+  }
+  return (
+    <NewWorkspaceForm
+      initialFilters={{
+        level: settings.data.defaultLevel,
+        duration: settings.data.defaultDuration,
+        balance: settings.data.defaultBalance,
+        freshness: settings.data.defaultFreshness,
+      }}
+    />
+  );
+}
+
+function NewWorkspaceForm({ initialFilters }: { initialFilters: WorkspaceFilters }) {
+  const router = useRouter();
   const create = trpc.workspaces.create.useMutation({
     onSuccess: (workspace) => {
       router.replace(`/app/workspaces/${workspace.id}`);
     },
   });
 
-  const initialFilters: WorkspaceFilters = useMemo(() => {
-    if (!settings.data) return defaultFilters;
-    return {
-      level: settings.data.defaultLevel,
-      duration: settings.data.defaultDuration,
-      balance: settings.data.defaultBalance,
-      freshness: settings.data.defaultFreshness,
-    };
-  }, [settings.data]);
-
   const [title, setTitle] = useState("");
   const [goal, setGoal] = useState("");
-  const [filters, setFilters] = useState<WorkspaceFilters>(defaultFilters);
+  const [filters, setFilters] = useState<WorkspaceFilters>(initialFilters);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-
-  useEffect(() => {
-    setFilters(initialFilters);
-  }, [initialFilters]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,25 +102,25 @@ export default function NewWorkspacePage() {
             <FilterSelect
               label="Level"
               value={filters.level}
-              options={LEVELS}
+              options={levelSchema.options}
               onChange={(v) => setFilters({ ...filters, level: v })}
             />
             <FilterSelect
               label="Duration"
               value={filters.duration}
-              options={DURATIONS}
+              options={durationSchema.options}
               onChange={(v) => setFilters({ ...filters, duration: v })}
             />
             <FilterSelect
               label="Balance"
               value={filters.balance}
-              options={BALANCES}
+              options={balanceSchema.options}
               onChange={(v) => setFilters({ ...filters, balance: v })}
             />
             <FilterSelect
               label="Freshness"
               value={filters.freshness}
-              options={FRESHNESS}
+              options={freshnessSchema.options}
               onChange={(v) => setFilters({ ...filters, freshness: v })}
             />
           </div>

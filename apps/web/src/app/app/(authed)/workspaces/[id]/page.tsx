@@ -14,7 +14,7 @@ export default async function WorkspaceDetailPage({
   const trpc = await createServerTrpc();
   try {
     const workspace = await trpc.workspaces.byId.query({ id });
-    await trpc.workspaces.touch.mutate({ id });
+    void trpc.workspaces.touch.mutate({ id });
     return <WorkspaceClient initial={workspace} />;
   } catch (err) {
     if (err instanceof TRPCClientError && err.data?.code === "NOT_FOUND") {

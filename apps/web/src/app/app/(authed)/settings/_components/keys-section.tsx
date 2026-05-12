@@ -6,29 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc/react";
+import { providerSchema, type Provider } from "@kubertube/core/key-validators";
 
-const PROVIDERS = [
-  {
-    id: "youtube" as const,
+const PROVIDER_META: Record<Provider, { label: string; hint: string; required: boolean }> = {
+  youtube: {
     label: "YouTube Data API",
     hint: "console.cloud.google.com → APIs & Services → Credentials",
     required: true,
   },
-  {
-    id: "brave" as const,
+  brave: {
     label: "Brave Search API",
     hint: "api.search.brave.com → Subscriptions (free tier: 2000 requests/month)",
     required: true,
   },
-  {
-    id: "anthropic" as const,
+  anthropic: {
     label: "Anthropic API",
     hint: "console.anthropic.com → API Keys. Опционально, нужен только для AI-резюме.",
     required: false,
   },
-];
-
-type Provider = (typeof PROVIDERS)[number]["id"];
+};
 
 export function KeysSection() {
   const list = trpc.keys.list.useQuery();
@@ -44,15 +40,12 @@ export function KeysSection() {
         </p>
       </header>
       <div className="space-y-3">
-        {PROVIDERS.map((provider) => {
-          const existing = stored.find((row) => row.provider === provider.id);
+        {providerSchema.options.map((provider) => {
+          const existing = stored.find((row) => row.provider === provider);
           return (
             <ProviderRow
-              key={provider.id}
-              provider={provider.id}
-              label={provider.label}
-              hint={provider.hint}
-              required={provider.required}
+              key={provider}
+              provider={provider}
               existing={existing}
               onChange={() => list.refetch()}
             />
@@ -73,19 +66,14 @@ interface ExistingKey {
 
 function ProviderRow({
   provider,
-  label,
-  hint,
-  required,
   existing,
   onChange,
 }: {
   provider: Provider;
-  label: string;
-  hint: string;
-  required: boolean;
   existing: ExistingKey | undefined;
   onChange: () => void;
 }) {
+  const meta = PROVIDER_META[provider];
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
   const set = trpc.keys.set.useMutation();
@@ -118,8 +106,8 @@ function ProviderRow({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Key className="h-4 w-4 text-muted" />
-            <span className="text-sm font-medium">{label}</span>
-            {required ? (
+            <span className="text-sm font-medium">{meta.label}</span>
+            {meta.required ? (
               <span className="rounded-sm bg-foreground/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
                 Required
               </span>
@@ -136,7 +124,7 @@ function ProviderRow({
               )
             ) : null}
           </div>
-          <p className="text-xs text-muted">{hint}</p>
+          <p className="text-xs text-muted">{meta.hint}</p>
           {existing ? (
             <p className="font-mono text-xs text-muted">•••• {existing.keyLast4}</p>
           ) : null}

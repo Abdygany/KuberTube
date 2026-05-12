@@ -2,17 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { TRPCClientError } from "@trpc/client";
-import { createServerTrpc } from "@/lib/trpc/server";
+import { getUserBootstrap } from "@/lib/trpc/server";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const trpc = await createServerTrpc();
   let me: { id: string; email: string; name: string | null };
   try {
-    me = await trpc.user.me.query();
+    ({ me } = await getUserBootstrap());
   } catch (err) {
     if (err instanceof TRPCClientError && err.data?.code === "UNAUTHORIZED") {
       redirect("/sign-in");

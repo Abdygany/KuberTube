@@ -1,4 +1,7 @@
-export type Provider = "youtube" | "brave" | "anthropic";
+import { z } from "zod";
+
+export const providerSchema = z.enum(["youtube", "brave", "anthropic"]);
+export type Provider = z.infer<typeof providerSchema>;
 
 export interface ValidationResult {
   valid: boolean;
@@ -8,9 +11,8 @@ export interface ValidationResult {
 const TIMEOUT_MS = 5000;
 
 /**
- * Validates a YouTube Data API v3 key with a 1-unit-quota call
- * (`videos.list` with a known public video id). `search.list` would
- * cost 100 units per validation — never use it for a ping.
+ * Uses `videos.list` (1 quota unit) instead of `search.list` (100
+ * units) so a validation ping doesn't eat 1% of the user's daily quota.
  */
 export async function validateYouTubeKey(key: string): Promise<ValidationResult> {
   if (!/^[A-Za-z0-9_-]{20,60}$/.test(key)) {
@@ -23,10 +25,7 @@ export async function validateYouTubeKey(key: string): Promise<ValidationResult>
   return pingJson(url, { method: "GET" });
 }
 
-/**
- * Validates a Brave Search API key with a 1-result web search.
- * Brave's free tier allows 2k requests/month; this consumes 1.
- */
+/** Brave free tier allows 2k requests/month; this consumes 1. */
 export async function validateBraveKey(key: string): Promise<ValidationResult> {
   if (!/^[A-Za-z0-9_-]{20,80}$/.test(key)) {
     return { valid: false, reason: "Key format does not look like a Brave subscription token" };
@@ -43,10 +42,7 @@ export async function validateBraveKey(key: string): Promise<ValidationResult> {
   });
 }
 
-/**
- * Validates an Anthropic API key via `GET /v1/models` — free, zero
- * tokens consumed, returns 200 with a valid key and 401 with invalid.
- */
+/** `/v1/models` is free, returns 200 with a valid key and 401 otherwise. */
 export async function validateAnthropicKey(key: string): Promise<ValidationResult> {
   if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(key)) {
     return { valid: false, reason: "Anthropic keys start with sk-ant-" };
@@ -60,10 +56,7 @@ export async function validateAnthropicKey(key: string): Promise<ValidationResul
   });
 }
 
-export async function validateKey(
-  provider: Provider,
-  key: string,
-): Promise<ValidationResult> {
+export async function validateKey(provider: Provider, key: string): Promise<ValidationResult> {
   switch (provider) {
     case "youtube":
       return validateYouTubeKey(key);
@@ -74,10 +67,7 @@ export async function validateKey(
   }
 }
 
-async function pingJson(
-  url: URL,
-  init: RequestInit,
-): Promise<ValidationResult> {
+async function pingJson(url: URL, init: RequestInit): Promise<ValidationResult> {
   try {
     const response = await fetch(url, {
       ...init,

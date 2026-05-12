@@ -2,18 +2,8 @@
 
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
+import { applyTheme, THEME_STORAGE_KEY, type Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-
-type Theme = "light" | "dark" | "system";
-
-const STORAGE_KEY = "kubertube:theme";
-
-function applyTheme(value: Theme) {
-  if (typeof document === "undefined") return;
-  const system = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const dark = value === "dark" || (value === "system" && system);
-  document.documentElement.classList.toggle("dark", dark);
-}
 
 const options: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Light", icon: Sun },
@@ -25,11 +15,11 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("system");
 
   useEffect(() => {
-    const stored = (localStorage.getItem(STORAGE_KEY) ?? "system") as Theme;
+    const stored = (localStorage.getItem(THEME_STORAGE_KEY) ?? "system") as Theme;
     setTheme(stored);
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => {
-      if ((localStorage.getItem(STORAGE_KEY) ?? "system") === "system") {
+      if ((localStorage.getItem(THEME_STORAGE_KEY) ?? "system") === "system") {
         applyTheme("system");
       }
     };
@@ -38,8 +28,9 @@ export function ThemeToggle() {
   }, []);
 
   function update(value: Theme) {
+    if (value === theme) return;
     setTheme(value);
-    localStorage.setItem(STORAGE_KEY, value);
+    localStorage.setItem(THEME_STORAGE_KEY, value);
     applyTheme(value);
   }
 
