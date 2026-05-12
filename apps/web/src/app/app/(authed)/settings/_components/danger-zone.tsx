@@ -15,8 +15,12 @@ export function DangerZone() {
   const [opened, setOpened] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState("");
   const deleteAccount = trpc.user.deleteAccount.useMutation({
-    onSuccess: async () => {
-      await signOut();
+    onSuccess: () => {
+      // Redirect first so the user lands on a safe page even if the
+      // signOut network call fails. The session row is already gone,
+      // so any stale cookie is harmless — next request hits the
+      // middleware → /sign-in path.
+      void signOut();
       router.replace("/");
       router.refresh();
     },
@@ -66,9 +70,9 @@ export function DangerZone() {
               Cancel
             </Button>
             <Button
+              variant="destructive"
               onClick={() => deleteAccount.mutate({ confirmEmail })}
               disabled={!canDelete || deleteAccount.isPending}
-              className="bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300"
             >
               {deleteAccount.isPending ? "Deleting..." : "Permanently delete account"}
             </Button>

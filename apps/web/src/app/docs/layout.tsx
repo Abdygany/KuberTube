@@ -38,7 +38,7 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
             ))}
           </ul>
         </aside>
-        <main className="prose-docs min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { BookOpen, KeyRound, Search, ShieldOff } from "lucide-react";
 import Link from "next/link";
+import { Disclosure } from "@/components/ui/disclosure";
 
 export default function LandingPage() {
   return (
@@ -77,22 +78,21 @@ export default function LandingPage() {
 
       <section className="mt-12 space-y-4">
         <h2 className="text-xs font-medium uppercase tracking-widest text-muted">FAQ</h2>
-        <Faq
-          q="Что мне нужно, чтобы начать?"
-          a="Зарегистрироваться и добавить два бесплатных API-ключа: YouTube Data API (10k запросов/день free) и Brave Search (2000 запросов/мес free). Anthropic — опционально, для AI-резюме в будущих фазах."
-        />
-        <Faq
-          q="Реклама в видео YouTube — есть?"
-          a="Да, на монетизированных видео реклама остаётся — YouTube IFrame API её не отключает. Мы предпочитаем академические каналы в подборке, но обещать «полностью без рекламы» нечестно."
-        />
-        <Faq
-          q="Куда уходят данные?"
-          a="Email, заметки, метаданные ресурсов — в твою БД (или в нашу, если используешь хостинг). Содержимое статей не сохраняется (copyright). API-ключи зашифрованы AES-256-GCM с per-row AAD."
-        />
-        <Faq
-          q="Это open source?"
-          a="Да. MIT-лицензия, код на GitHub. Можно self-host через Docker Compose — см. /docs."
-        />
+        <Disclosure question="Что мне нужно, чтобы начать?">
+          Зарегистрироваться и добавить два бесплатных API-ключа: YouTube Data API (10k запросов/день free)
+          и Brave Search (2000 запросов/мес free). Anthropic — опционально, для AI-резюме в будущих фазах.
+        </Disclosure>
+        <Disclosure question="Реклама в видео YouTube — есть?">
+          Да, на монетизированных видео реклама остаётся — YouTube IFrame API её не отключает. Мы
+          предпочитаем академические каналы в подборке, но обещать «полностью без рекламы» нечестно.
+        </Disclosure>
+        <Disclosure question="Куда уходят данные?">
+          Email, заметки, метаданные ресурсов — в твою БД (или в нашу, если используешь хостинг).
+          Содержимое статей не сохраняется (copyright). API-ключи зашифрованы AES-256-GCM с per-row AAD.
+        </Disclosure>
+        <Disclosure question="Это open source?">
+          Да. MIT-лицензия, код на GitHub. Можно self-host через Docker Compose — см. /docs.
+        </Disclosure>
       </section>
 
       <footer className="mt-20 border-t border-border pt-6 text-xs text-muted">
@@ -114,11 +114,3 @@ function Feature({ icon, title, body }: { icon: React.ReactNode; title: string; 
   );
 }
 
-function Faq({ q, a }: { q: string; a: string }) {
-  return (
-    <details className="rounded-md border border-border bg-card p-4 [&_summary]:cursor-pointer">
-      <summary className="text-sm font-medium">{q}</summary>
-      <p className="mt-2 text-sm leading-relaxed text-muted">{a}</p>
-    </details>
-  );
-}

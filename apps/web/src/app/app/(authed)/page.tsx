@@ -2,19 +2,19 @@
 
 import Link from "next/link";
 import { BookOpen, Plus, RotateCcw, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc/react";
 
 export default function WorkspacesListPage() {
   const list = trpc.workspaces.list.useQuery();
-  const trash = trpc.workspaces.listDeleted.useQuery();
+  const trash = trpc.workspaces.listDeleted.useQuery(undefined, {
+    enabled: (list.data?.length ?? 0) > 0,
+  });
   const restore = trpc.workspaces.restore.useMutation({
     onSuccess: async () => {
       await Promise.all([list.refetch(), trash.refetch()]);
     },
   });
-  const [showTrash, setShowTrash] = useState(false);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -74,41 +74,35 @@ export default function WorkspacesListPage() {
       )}
 
       {trash.data && trash.data.length > 0 ? (
-        <section className="mt-10">
-          <button
-            onClick={() => setShowTrash((v) => !v)}
-            className="inline-flex items-center gap-2 text-xs text-muted transition hover:text-foreground"
-          >
+        <details className="mt-10 [&_summary]:cursor-pointer">
+          <summary className="inline-flex items-center gap-2 text-xs text-muted transition hover:text-foreground">
             <Trash2 className="h-3.5 w-3.5" />
-            Trash ({trash.data.length}) — soft-deleted, restore within 30 days
-            <span className="ml-1">{showTrash ? "▾" : "▸"}</span>
-          </button>
-          {showTrash ? (
-            <ul className="mt-3 divide-y divide-border rounded-md border border-border bg-card">
-              {trash.data.map((workspace) => (
-                <li key={workspace.id} className="flex items-start gap-3 px-4 py-3">
-                  <Trash2 className="mt-0.5 h-4 w-4 text-muted" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{workspace.title}</div>
-                    <div className="truncate text-xs text-muted">{workspace.goal}</div>
-                    <div className="mt-1 text-[11px] text-muted">
-                      deleted {workspace.deletedAt ? new Date(workspace.deletedAt).toLocaleString() : "—"}
-                    </div>
+            Trash ({trash.data.length}) — soft-deleted workspaces, restore anytime
+          </summary>
+          <ul className="mt-3 divide-y divide-border rounded-md border border-border bg-card">
+            {trash.data.map((workspace) => (
+              <li key={workspace.id} className="flex items-start gap-3 px-4 py-3">
+                <Trash2 className="mt-0.5 h-4 w-4 text-muted" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium">{workspace.title}</div>
+                  <div className="truncate text-xs text-muted">{workspace.goal}</div>
+                  <div className="mt-1 text-[11px] text-muted">
+                    deleted {workspace.deletedAt ? new Date(workspace.deletedAt).toLocaleString() : "—"}
                   </div>
-                  <Button
-                    variant="secondary"
-                    onClick={() => restore.mutate({ id: workspace.id })}
-                    disabled={restore.isPending}
-                    className="h-8 px-2 text-xs"
-                  >
-                    <RotateCcw className="mr-1 h-3 w-3" />
-                    Restore
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => restore.mutate({ id: workspace.id })}
+                  disabled={restore.isPending}
+                  className="h-8 px-2 text-xs"
+                >
+                  <RotateCcw className="mr-1 h-3 w-3" />
+                  Restore
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </details>
       ) : null}
     </div>
   );

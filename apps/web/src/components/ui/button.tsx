@@ -8,7 +8,7 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "destructive";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -19,6 +19,7 @@ const variants: Record<Variant, string> = {
   primary: "bg-foreground text-background hover:opacity-90",
   secondary: "border border-border bg-card hover:bg-background",
   ghost: "hover:bg-card",
+  destructive: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-400",
 };
 
 const base =
