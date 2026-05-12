@@ -1,0 +1,26 @@
+{
+  "name": "@kubertube/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.2",
+    "@kubertube/db": "workspace:*",
+    "better-auth": "^1.0.10",
+    "hono": "^4.6.3"
+  },
+  "devDependencies": {
+    "@kubertube/config": "workspace:*",
+    "@types/node": "^20.16.11",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}
