@@ -2,13 +2,30 @@
 
 import { Search, X } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced";
 import { trpc } from "@/lib/trpc/react";
 
 export function SavedSearch() {
   const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const debounced = useDebouncedValue(query.trim(), 300);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      const isCmdK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      if (isCmdK) {
+        event.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      } else if (event.key === "Escape" && document.activeElement === inputRef.current) {
+        setQuery("");
+        inputRef.current?.blur();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const enabled = debounced.length >= 2;
   const results = trpc.search.savedContent.useQuery(
@@ -16,22 +33,21 @@ export function SavedSearch() {
     { enabled, staleTime: 5_000 },
   );
 
-  const grouped = useMemo(() => {
-    if (!results.data) return [];
-    return results.data;
-  }, [results.data]);
-
   return (
     <div className="space-y-3">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
         <input
+          ref={inputRef}
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search saved resources and notes..."
-          className="h-10 w-full rounded-md border border-border bg-card pl-9 pr-9 text-sm outline-none transition placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent"
+          className="h-10 w-full rounded-md border border-border bg-card pl-9 pr-20 text-sm outline-none transition placeholder:text-muted focus-visible:ring-2 focus-visible:ring-accent"
         />
+        <kbd className="pointer-events-none absolute right-9 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted md:inline">
+          ⌘K
+        </kbd>
         {query.length > 0 ? (
           <button
             onClick={() => setQuery("")}
@@ -48,12 +64,12 @@ export function SavedSearch() {
       ) : null}
 
       {enabled && results.data && results.data.length === 0 ? (
-        <p className="text-xs text-muted">No matches for "{debounced}".</p>
+        <p className="text-xs text-muted">No matches for &quot;{debounced}&quot;.</p>
       ) : null}
 
-      {enabled && grouped.length > 0 ? (
+      {enabled && (results.data?.length ?? 0) > 0 ? (
         <ul className="space-y-2 rounded-md border border-border bg-card p-2">
-          {grouped.map((hit) => (
+          {(results.data ?? []).map((hit) => (
             <li key={`${hit.kind}:${hit.resourceId}:${hit.savedAt.toISOString()}`}>
               <Link
                 href={`/app/workspaces/${hit.workspaceId}/resources/${hit.resourceId}`}

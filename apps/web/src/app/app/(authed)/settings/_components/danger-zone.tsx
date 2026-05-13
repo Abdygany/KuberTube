@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/react";
+import { useAppUser } from "@/lib/user-context";
 
 export function DangerZone() {
-  const me = trpc.user.me.useQuery();
+  const { me } = useAppUser();
   const router = useRouter();
   const [opened, setOpened] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState("");
@@ -26,9 +27,8 @@ export function DangerZone() {
     },
   });
 
-  const expectedEmail = me.data?.email;
-  const canDelete =
-    !!expectedEmail && confirmEmail.trim().toLowerCase() === expectedEmail.toLowerCase();
+  const expectedEmail = me.email;
+  const canDelete = confirmEmail.trim().toLowerCase() === expectedEmail.toLowerCase();
 
   return (
     <section className="space-y-3">

@@ -1,5 +1,7 @@
 import { serve } from "@hono/node-server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { sql } from "drizzle-orm";
+import { getDb } from "@kubertube/db";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -21,7 +23,34 @@ app.use(
   }),
 );
 
+/**
+ * Liveness probe — always 200. Use this for orchestrator restart
+ * signals (Railway healthcheck, Kubernetes liveness).
+ */
 app.get("/health", (c) => c.json({ ok: true, service: "kubertube-api" }));
+
+/**
+ * Readiness probe — 200 only when the DB is reachable. Slower than
+ * /health (~10ms with a healthy pool); use this for deploy-time
+ * gating and traffic-shifting.
+ */
+app.get("/health/ready", async (c) => {
+  try {
+    const db = getDb(env.DATABASE_URL);
+    await db.execute(sql`select 1`);
+    return c.json({ ok: true, service: "kubertube-api", db: "ok" });
+  } catch (err) {
+    return c.json(
+      {
+        ok: false,
+        service: "kubertube-api",
+        db: "unreachable",
+        reason: err instanceof Error ? err.message : "unknown",
+      },
+      503,
+    );
+  }
+});
 
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 

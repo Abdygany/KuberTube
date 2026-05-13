@@ -37,8 +37,9 @@ openssl rand -hex 32
 
 # 4. Поднять Postgres + миграции
 docker compose up -d
-pnpm db:generate
-pnpm db:migrate
+pnpm db:migrate          # применит зачекинённую миграцию 0000_initial.sql
+# или для быстрого dev-цикла:
+# pnpm db:push           # пушит схему напрямую без журнала
 
 # 5. Запустить web (:3000) и api (:3001)
 pnpm dev`}
@@ -65,6 +66,43 @@ pnpm dev`}
             <strong>DNS</strong>: Cloudflare для проксирования и базовой защиты.
           </li>
         </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-medium">Cleanup cron (30-day purge)</h2>
+        <p className="mt-2 text-sm">
+          Soft-deleted workspaces / resources / notes физически удаляются через 30 дней (PDF §4).
+          Запускайте <code>pnpm db:cleanup</code> по расписанию — например, через Railway cron
+          job раз в сутки:
+        </p>
+        <pre className="mt-3 overflow-x-auto rounded-md bg-card p-4 text-xs">
+{`# railway.toml
+[services.cleanup]
+type = "cron"
+schedule = "0 3 * * *"
+startCommand = "pnpm db:cleanup"
+`}
+        </pre>
+        <p className="mt-2 text-xs text-muted">
+          Retention настраивается через <code>SOFT_DELETE_RETENTION_DAYS</code> (default 30).
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-medium">Docker</h2>
+        <p className="mt-2 text-sm">
+          Образ apps/api строится из репозитория:
+        </p>
+        <pre className="mt-3 overflow-x-auto rounded-md bg-card p-4 text-xs">
+{`docker build -f apps/api/Dockerfile -t kubertube-api .
+docker run --rm -p 3001:3001 \\
+  -e DATABASE_URL=... \\
+  -e BETTER_AUTH_SECRET=... \\
+  -e BETTER_AUTH_URL=... \\
+  -e WEB_URL=... \\
+  -e ENCRYPTION_KEY=... \\
+  kubertube-api`}
+        </pre>
       </section>
 
       <section className="rounded-md border border-border bg-card p-4 text-sm">
