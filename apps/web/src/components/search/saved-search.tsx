@@ -16,6 +16,14 @@ export function SavedSearch() {
       const isCmdK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
       if (isCmdK) {
         event.preventDefault();
+        // No-op if our input is already focused.
+        if (document.activeElement === inputRef.current) return;
+        // Don't steal focus from other inputs (note editor, settings forms, etc.).
+        const active = document.activeElement;
+        const tag = active instanceof HTMLElement ? active.tagName : "";
+        if (tag === "INPUT" || tag === "TEXTAREA" || (active as HTMLElement | null)?.isContentEditable) {
+          return;
+        }
         inputRef.current?.focus();
         inputRef.current?.select();
       } else if (event.key === "Escape" && document.activeElement === inputRef.current) {

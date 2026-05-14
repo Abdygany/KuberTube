@@ -8,12 +8,19 @@ export interface AppUser {
   name: string | null;
 }
 
+/**
+ * Structural type of `userSettings` row that we expose to the client.
+ * Kept structural (not `Awaited<ReturnType<...>>`) so this module
+ * stays browser-safe — importing from `@/lib/trpc/server` would drag
+ * server-only Drizzle deps in. The enum members mirror the pgEnum
+ * literals in `packages/db/src/schema/user-settings.ts`.
+ */
 export interface AppSettings {
-  defaultLevel: string;
-  defaultDuration: string;
-  defaultBalance: string;
-  defaultFreshness: string;
-  uiTheme: string;
+  defaultLevel: "beginner" | "intermediate" | "advanced";
+  defaultDuration: "short" | "medium" | "long";
+  defaultBalance: "video" | "text" | "mixed";
+  defaultFreshness: "any" | "6m" | "1y" | "2y";
+  uiTheme: "light" | "dark" | "system";
   uiLanguage: string;
   onboardingCompleted: boolean;
 }
@@ -39,6 +46,8 @@ export function UserProvider({
  * Returns the bootstrapped user + settings threaded down from the
  * `/app` layout. Throws if used outside that provider — components
  * that need bootstrap data must be rendered inside the authed shell.
+ * For shared UI that may render on public pages, use
+ * `useOptionalAppUser` instead.
  */
 export function useAppUser(): UserContextValue {
   const ctx = useContext(UserContext);
@@ -46,4 +55,9 @@ export function useAppUser(): UserContextValue {
     throw new Error("useAppUser called outside <UserProvider>");
   }
   return ctx;
+}
+
+/** Same as `useAppUser` but returns `null` outside the provider. */
+export function useOptionalAppUser(): UserContextValue | null {
+  return useContext(UserContext);
 }

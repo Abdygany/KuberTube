@@ -32,7 +32,10 @@ app.get("/health", (c) => c.json({ ok: true, service: "kubertube-api" }));
 /**
  * Readiness probe — 200 only when the DB is reachable. Slower than
  * /health (~10ms with a healthy pool); use this for deploy-time
- * gating and traffic-shifting.
+ * gating and traffic-shifting. The underlying error is logged
+ * server-side; the response intentionally never echoes it so an
+ * unauthenticated probe can't enumerate internal hostnames / role
+ * names from Postgres error strings.
  */
 app.get("/health/ready", async (c) => {
   try {
@@ -40,13 +43,9 @@ app.get("/health/ready", async (c) => {
     await db.execute(sql`select 1`);
     return c.json({ ok: true, service: "kubertube-api", db: "ok" });
   } catch (err) {
+    console.error("[health/ready] db check failed:", err);
     return c.json(
-      {
-        ok: false,
-        service: "kubertube-api",
-        db: "unreachable",
-        reason: err instanceof Error ? err.message : "unknown",
-      },
+      { ok: false, service: "kubertube-api", db: "unreachable" },
       503,
     );
   }

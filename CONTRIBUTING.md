@@ -47,7 +47,7 @@ pnpm dev          # web на :3000, api на :3001
 ## Workflow
 
 1. Создай ветку от `main`.
-2. Сделай коммит — `pnpm format && pnpm lint && pnpm typecheck && pnpm test` зелёные. Pre-commit hook это проверит автоматически.
+2. Сделай коммит. Pre-commit hook прогонит `prettier --write` через `lint-staged` на staged-файлах. Полные проверки (`pnpm lint && pnpm typecheck && pnpm test`) — рекомендуется прогонять локально перед пушем; они обязательны в CI.
 3. Открой PR против `main`. Шаблон заполнится автоматически.
 4. CI (`.github/workflows/ci.yml`) запускает typecheck + lint + test + format:check + build. Должно быть зелёное.
 5. Один аппрув + зелёный CI → merge.
