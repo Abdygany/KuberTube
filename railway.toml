@@ -1,0 +1,78 @@
+# Railway deployment for KuberTube.
+#
+# Three services + an optional cron — set up via the Railway dashboard
+# pointing at this monorepo. Each service has its own root and its own
+# Dockerfile; share the same Postgres add-on.
+#
+# Usage:
+#   1. In Railway dashboard: New Project → Deploy from GitHub repo →
+#      pick Abdygany/KuberTube.
+#   2. Add a managed Postgres plugin. Railway sets DATABASE_URL automatically
+#      (the variable name happens to match what apps/api expects — no rename
+#      needed).
+#   3. Create three services and one cron, each pointing at this repo:
+#      - api      → apps/api/Dockerfile
+#      - web      → apps/web/Dockerfile
+#      - cleanup  → cron, runs `pnpm db:cleanup` daily
+#   4. Set the env vars on each service per the [services.*.variables]
+#      sections below (Railway → Settings → Variables).
+#   5. Add a Postgres extension for gen_random_uuid (already in core, no
+#      action needed on Railway-provisioned Postgres 16).
+#   6. On first deploy of the api service, exec into the container once:
+#      `pnpm db:migrate`  (or wire as a release command — see the api
+#      service config).
+
+# ---- api service ---------------------------------------------------------
+[services.api]
+source = "."
+[services.api.build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/api/Dockerfile"
+[services.api.deploy]
+# Run pending migrations on every deploy before starting the server.
+preDeployCommand = "node -e \"require('child_process').execSync('pnpm --filter @kubertube/db db:migrate', { stdio: 'inherit', cwd: '/repo' })\""
+startCommand = "node dist/index.js"
+healthcheckPath = "/health/ready"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Required env (set in Railway dashboard, not committed):
+#   DATABASE_URL              (auto-injected by Postgres plugin)
+#   BETTER_AUTH_SECRET        (openssl rand -base64 32)
+#   BETTER_AUTH_URL           (https://<api-domain>)
+#   WEB_URL                   (https://<web-domain> — for CORS)
+#   ENCRYPTION_KEY            (openssl rand -hex 32 — KEEP SAFE, can't recover keys)
+#   PORT                      (Railway sets this; api respects it)
+
+# ---- web service ---------------------------------------------------------
+[services.web]
+source = "."
+[services.web.build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/web/Dockerfile"
+[services.web.deploy]
+startCommand = "pnpm --filter @kubertube/web start"
+healthcheckPath = "/"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Required env:
+#   NEXT_PUBLIC_API_URL       (https://<api-domain>)
+#   PORT                      (Railway sets this)
+
+# ---- cleanup cron --------------------------------------------------------
+[services.cleanup]
+source = "."
+[services.cleanup.build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/api/Dockerfile"
+[services.cleanup.deploy]
+# Cron expression: 03:00 UTC daily. Change to taste.
+cronSchedule = "0 3 * * *"
+startCommand = "pnpm --filter @kubertube/db db:cleanup"
+
+# Required env:
+#   DATABASE_URL                       (auto)
+#   SOFT_DELETE_RETENTION_DAYS         (optional, default 30)
