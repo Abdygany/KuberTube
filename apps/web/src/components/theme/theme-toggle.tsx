@@ -15,7 +15,8 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("system");
 
   useEffect(() => {
-    const stored = (localStorage.getItem(THEME_STORAGE_KEY) ?? "system") as Theme;
+    const stored = (localStorage.getItem(THEME_STORAGE_KEY) ??
+      "system") as Theme;
     setTheme(stored);
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => {
@@ -49,7 +50,9 @@ export function ThemeToggle() {
           onClick={() => update(value)}
           className={cn(
             "inline-flex h-8 w-8 items-center justify-center rounded transition",
-            theme === value ? "bg-background text-foreground" : "text-muted hover:text-foreground",
+            theme === value
+              ? "bg-background text-foreground"
+              : "text-muted hover:text-foreground",
           )}
         >
           <Icon className="h-4 w-4" />

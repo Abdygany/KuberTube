@@ -5,7 +5,11 @@ import { TRPCClientError } from "@trpc/client";
 import { getUserBootstrap } from "@/lib/trpc/server";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { UserProvider, type AppSettings, type AppUser } from "@/lib/user-context";
+import {
+  UserProvider,
+  type AppSettings,
+  type AppUser,
+} from "@/lib/user-context";
 
 export const dynamic = "force-dynamic";
 

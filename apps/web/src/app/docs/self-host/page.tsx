@@ -4,8 +4,8 @@ export default function SelfHostGuide() {
       <header>
         <h1 className="text-3xl font-semibold">Self-host</h1>
         <p className="mt-2 text-muted">
-          KuberTube — open-source. Можно поднять локально (Docker Compose) или на любом VPS с
-          Postgres.
+          KuberTube — open-source. Можно поднять локально (Docker Compose) или
+          на любом VPS с Postgres.
         </p>
       </header>
 
@@ -13,7 +13,9 @@ export default function SelfHostGuide() {
         <h2 className="text-xl font-medium">Prerequisites</h2>
         <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
           <li>Node.js 20 LTS</li>
-          <li>pnpm 9 (<code>corepack enable</code>)</li>
+          <li>
+            pnpm 9 (<code>corepack enable</code>)
+          </li>
           <li>Docker (для локального Postgres)</li>
         </ul>
       </section>
@@ -21,7 +23,7 @@ export default function SelfHostGuide() {
       <section>
         <h2 className="text-xl font-medium">Local development</h2>
         <pre className="mt-3 overflow-x-auto rounded-md bg-card p-4 text-xs">
-{`# 1. Clone и зависимости
+          {`# 1. Clone и зависимости
 git clone https://github.com/Abdygany/KuberTube.git
 cd KuberTube
 pnpm install
@@ -50,17 +52,19 @@ pnpm dev`}
         <h2 className="text-xl font-medium">Production deploy</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm">
           <li>
-            <strong>Frontend</strong>: Vercel — связать репозиторий, root <code>apps/web</code>, env
-            переменные <code>NEXT_PUBLIC_API_URL</code>.
+            <strong>Frontend</strong>: Vercel — связать репозиторий, root{" "}
+            <code>apps/web</code>, env переменные{" "}
+            <code>NEXT_PUBLIC_API_URL</code>.
           </li>
           <li>
-            <strong>Backend</strong>: Railway — <code>apps/api</code>, Dockerfile, env переменные
-            <code>DATABASE_URL</code>, <code>BETTER_AUTH_SECRET</code>, <code>ENCRYPTION_KEY</code>,
-            <code>WEB_URL</code>.
+            <strong>Backend</strong>: Railway — <code>apps/api</code>,
+            Dockerfile, env переменные
+            <code>DATABASE_URL</code>, <code>BETTER_AUTH_SECRET</code>,{" "}
+            <code>ENCRYPTION_KEY</code>,<code>WEB_URL</code>.
           </li>
           <li>
-            <strong>Postgres</strong>: managed на Railway или Neon. Применить миграции через{" "}
-            <code>pnpm db:migrate</code>.
+            <strong>Postgres</strong>: managed на Railway или Neon. Применить
+            миграции через <code>pnpm db:migrate</code>.
           </li>
           <li>
             <strong>DNS</strong>: Cloudflare для проксирования и базовой защиты.
@@ -71,12 +75,12 @@ pnpm dev`}
       <section>
         <h2 className="text-xl font-medium">Cleanup cron (30-day purge)</h2>
         <p className="mt-2 text-sm">
-          Soft-deleted workspaces / resources / notes физически удаляются через 30 дней (PDF §4).
-          Запускайте <code>pnpm db:cleanup</code> по расписанию — например, через Railway cron
-          job раз в сутки:
+          Soft-deleted workspaces / resources / notes физически удаляются через
+          30 дней (PDF §4). Запускайте <code>pnpm db:cleanup</code> по
+          расписанию — например, через Railway cron job раз в сутки:
         </p>
         <pre className="mt-3 overflow-x-auto rounded-md bg-card p-4 text-xs">
-{`# railway.toml
+          {`# railway.toml
 [services.cleanup]
 type = "cron"
 schedule = "0 3 * * *"
@@ -84,17 +88,16 @@ startCommand = "pnpm db:cleanup"
 `}
         </pre>
         <p className="mt-2 text-xs text-muted">
-          Retention настраивается через <code>SOFT_DELETE_RETENTION_DAYS</code> (default 30).
+          Retention настраивается через <code>SOFT_DELETE_RETENTION_DAYS</code>{" "}
+          (default 30).
         </p>
       </section>
 
       <section>
         <h2 className="text-xl font-medium">Docker</h2>
-        <p className="mt-2 text-sm">
-          Образ apps/api строится из репозитория:
-        </p>
+        <p className="mt-2 text-sm">Образ apps/api строится из репозитория:</p>
         <pre className="mt-3 overflow-x-auto rounded-md bg-card p-4 text-xs">
-{`docker build -f apps/api/Dockerfile -t kubertube-api .
+          {`docker build -f apps/api/Dockerfile -t kubertube-api .
 docker run --rm -p 3001:3001 \\
   -e DATABASE_URL=... \\
   -e BETTER_AUTH_SECRET=... \\
@@ -108,10 +111,11 @@ docker run --rm -p 3001:3001 \\
       <section className="rounded-md border border-border bg-card p-4 text-sm">
         <h3 className="font-medium">Backups</h3>
         <p className="mt-2 text-muted">
-          Бэкапить надо Postgres (юзеры, workspaces, ресурсы, заметки). Контент статей в БД не
-          хранится — он fetch-ится через reader-mode из источников. Master-ключ{" "}
-          <code>ENCRYPTION_KEY</code> хранить отдельно (как, например, в Doppler или 1Password) — без
-          него зашифрованные ключи пользователей нельзя восстановить.
+          Бэкапить надо Postgres (юзеры, workspaces, ресурсы, заметки). Контент
+          статей в БД не хранится — он fetch-ится через reader-mode из
+          источников. Master-ключ <code>ENCRYPTION_KEY</code> хранить отдельно
+          (как, например, в Doppler или 1Password) — без него зашифрованные
+          ключи пользователей нельзя восстановить.
         </p>
       </section>
     </article>

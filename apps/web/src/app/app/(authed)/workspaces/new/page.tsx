@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc/react";
 import {
   balanceSchema,
-  defaultFilters,
   durationSchema,
   freshnessSchema,
   levelSchema,
@@ -19,7 +18,11 @@ import {
 export default function NewWorkspacePage() {
   const settings = trpc.settings.get.useQuery();
   if (!settings.data) {
-    return <p className="mx-auto max-w-xl px-6 py-10 text-sm text-muted">Loading...</p>;
+    return (
+      <p className="mx-auto max-w-xl px-6 py-10 text-sm text-muted">
+        Loading...
+      </p>
+    );
   }
   return (
     <NewWorkspaceForm
@@ -33,7 +36,11 @@ export default function NewWorkspacePage() {
   );
 }
 
-function NewWorkspaceForm({ initialFilters }: { initialFilters: WorkspaceFilters }) {
+function NewWorkspaceForm({
+  initialFilters,
+}: {
+  initialFilters: WorkspaceFilters;
+}) {
   const router = useRouter();
   const create = trpc.workspaces.create.useMutation({
     onSuccess: (workspace) => {

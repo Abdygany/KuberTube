@@ -15,7 +15,10 @@ export function ProfileSection() {
         <p className="text-xs text-muted">{me.data?.email ?? ""}</p>
       </header>
       {me.data ? (
-        <ProfileForm initialName={me.data.name ?? ""} onSaved={() => me.refetch()} />
+        <ProfileForm
+          initialName={me.data.name ?? ""}
+          onSaved={() => me.refetch()}
+        />
       ) : (
         <p className="text-xs text-muted">Loading...</p>
       )}

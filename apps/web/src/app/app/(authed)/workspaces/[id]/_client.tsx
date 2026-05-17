@@ -1,11 +1,22 @@
 "use client";
 
-import { AlertTriangle, Download, FileText, RefreshCw, Search, Trash2, Video } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  FileText,
+  RefreshCw,
+  Search,
+  Trash2,
+  Video,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ResourceCard, type DisplayResource } from "@/components/resources/resource-card";
+import {
+  ResourceCard,
+  type DisplayResource,
+} from "@/components/resources/resource-card";
 import { trpc } from "@/lib/trpc/react";
 import { cn } from "@/lib/utils";
 import {
@@ -28,47 +39,66 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
   const router = useRouter();
   const utils = trpc.useUtils();
   const filters: WorkspaceFilters =
-    workspaceFiltersSchema.safeParse(initial.filtersJson).data ?? defaultFilters;
+    workspaceFiltersSchema.safeParse(initial.filtersJson).data ??
+    defaultFilters;
 
-  const saved = trpc.resources.listByWorkspace.useQuery({ workspaceId: initial.id });
+  const saved = trpc.resources.listByWorkspace.useQuery({
+    workspaceId: initial.id,
+  });
   const search = trpc.search.run.useMutation();
 
   const add = trpc.resources.add.useMutation({
     onSuccess: (row) => {
-      utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, (prev) => {
-        const list = prev ?? [];
-        if (list.some((r) => r.id === row.id)) return list;
-        return [row, ...list];
-      });
+      utils.resources.listByWorkspace.setData(
+        { workspaceId: initial.id },
+        (prev) => {
+          const list = prev ?? [];
+          if (list.some((r) => r.id === row.id)) return list;
+          return [row, ...list];
+        },
+      );
     },
   });
   const remove = trpc.resources.softDelete.useMutation({
     onMutate: async ({ id }) => {
       await utils.resources.listByWorkspace.cancel({ workspaceId: initial.id });
-      const previous = utils.resources.listByWorkspace.getData({ workspaceId: initial.id });
-      utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, (list) =>
-        (list ?? []).filter((r) => r.id !== id),
+      const previous = utils.resources.listByWorkspace.getData({
+        workspaceId: initial.id,
+      });
+      utils.resources.listByWorkspace.setData(
+        { workspaceId: initial.id },
+        (list) => (list ?? []).filter((r) => r.id !== id),
       );
       return { previous };
     },
     onError: (_err, _input, ctx) => {
       if (ctx?.previous) {
-        utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, ctx.previous);
+        utils.resources.listByWorkspace.setData(
+          { workspaceId: initial.id },
+          ctx.previous,
+        );
       }
     },
   });
   const markComplete = trpc.resources.markCompleted.useMutation({
     onMutate: async ({ id, isCompleted }) => {
       await utils.resources.listByWorkspace.cancel({ workspaceId: initial.id });
-      const previous = utils.resources.listByWorkspace.getData({ workspaceId: initial.id });
-      utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, (list) =>
-        (list ?? []).map((r) => (r.id === id ? { ...r, isCompleted } : r)),
+      const previous = utils.resources.listByWorkspace.getData({
+        workspaceId: initial.id,
+      });
+      utils.resources.listByWorkspace.setData(
+        { workspaceId: initial.id },
+        (list) =>
+          (list ?? []).map((r) => (r.id === id ? { ...r, isCompleted } : r)),
       );
       return { previous };
     },
     onError: (_err, _input, ctx) => {
       if (ctx?.previous) {
-        utils.resources.listByWorkspace.setData({ workspaceId: initial.id }, ctx.previous);
+        utils.resources.listByWorkspace.setData(
+          { workspaceId: initial.id },
+          ctx.previous,
+        );
       }
     },
   });
@@ -96,7 +126,9 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
 
   const exportMutation = trpc.workspaces.exportMarkdown.useMutation({
     onSuccess: (data) => {
-      const blob = new Blob([data.markdown], { type: "text/markdown;charset=utf-8" });
+      const blob = new Blob([data.markdown], {
+        type: "text/markdown;charset=utf-8",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -116,11 +148,15 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
     <div className="mx-auto max-w-3xl px-6 py-10">
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">{initial.title}</h1>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted">{initial.goal}</p>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted">
+          {initial.goal}
+        </p>
         <div className="flex flex-wrap gap-2 text-xs text-muted">
           <Chip>{filters.level}</Chip>
           <Chip>{filters.duration}</Chip>
-          <Chip icon={<BalanceIcon balance={filters.balance} />}>{filters.balance}</Chip>
+          <Chip icon={<BalanceIcon balance={filters.balance} />}>
+            {filters.balance}
+          </Chip>
           <Chip>freshness: {filters.freshness}</Chip>
         </div>
       </header>
@@ -131,13 +167,21 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
           {search.isPending ? "Searching..." : "Run search"}
         </Button>
         {search.data ? (
-          <Button variant="secondary" onClick={() => refresh(true)} disabled={search.isPending}>
+          <Button
+            variant="secondary"
+            onClick={() => refresh(true)}
+            disabled={search.isPending}
+          >
             <RefreshCw className="mr-1.5 h-4 w-4" />
             Refresh selection
           </Button>
         ) : null}
         {(saved.data?.length ?? 0) > 0 ? (
-          <Button variant="secondary" onClick={exportToMarkdown} disabled={exportMutation.isPending}>
+          <Button
+            variant="secondary"
+            onClick={exportToMarkdown}
+            disabled={exportMutation.isPending}
+          >
             <Download className="mr-1.5 h-4 w-4" />
             {exportMutation.isPending ? "Exporting..." : "Export"}
           </Button>
@@ -169,7 +213,9 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
         )}
       </div>
 
-      {search.error ? <SearchErrorBanner message={search.error.message} /> : null}
+      {search.error ? (
+        <SearchErrorBanner message={search.error.message} />
+      ) : null}
       {search.data && search.data.errors.length > 0 ? (
         <PartialSuccessBanner errors={search.data.errors} />
       ) : null}
@@ -192,16 +238,15 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
               variant="suggestion"
               isSaved={savedUrls.has(candidate.url)}
               busy={add.isPending}
-              onAdd={() =>
-                add.mutate({ workspaceId: initial.id, candidate })
-              }
+              onAdd={() => add.mutate({ workspaceId: initial.id, candidate })}
             />
           ))}
         </Section>
       ) : (
         <p className="mt-8 text-sm text-muted">
-          Click <strong className="text-foreground">Run search</strong> to find materials for this
-          workspace. Подбор использует YouTube + Brave Search с твоими ключами из{" "}
+          Click <strong className="text-foreground">Run search</strong> to find
+          materials for this workspace. Подбор использует YouTube + Brave Search
+          с твоими ключами из{" "}
           <Link className="underline" href="/app/settings">
             Settings
           </Link>
@@ -222,11 +267,16 @@ export function WorkspaceClient({ initial }: { initial: InitialWorkspace }) {
             isCompleted={resource.isCompleted}
             busy={remove.isPending || markComplete.isPending}
             onOpen={() =>
-              router.push(`/app/workspaces/${initial.id}/resources/${resource.id}`)
+              router.push(
+                `/app/workspaces/${initial.id}/resources/${resource.id}`,
+              )
             }
             onRemove={() => remove.mutate({ id: resource.id })}
             onToggleCompleted={() =>
-              markComplete.mutate({ id: resource.id, isCompleted: !resource.isCompleted })
+              markComplete.mutate({
+                id: resource.id,
+                isCompleted: !resource.isCompleted,
+              })
             }
           />
         ))}
@@ -249,7 +299,9 @@ function Section({
   return (
     <section className="mt-10">
       <header className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">{title}</h2>
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
+          {title}
+        </h2>
         <span className="text-xs text-muted">{count}</span>
       </header>
       {count === 0 ? (
@@ -285,7 +337,10 @@ function PartialSuccessBanner({
   return (
     <div className="mt-4 space-y-1 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-200">
       {errors.map((err, index) => (
-        <div key={`${err.provider}:${index}`} className="flex items-start gap-2">
+        <div
+          key={`${err.provider}:${index}`}
+          className="flex items-start gap-2"
+        >
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
             <strong className="capitalize">{err.provider}</strong>: {err.reason}
@@ -299,7 +354,13 @@ function PartialSuccessBanner({
   );
 }
 
-function Chip({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
+function Chip({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
   return (
     <span
       className={cn(

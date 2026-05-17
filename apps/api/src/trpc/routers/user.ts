@@ -62,7 +62,10 @@ export const userRouter = router({
         .where(eq(users.id, ctx.user.id))
         .returning();
       if (!updated) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "user not found" });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "user not found",
+        });
       }
       return { ok: true as const };
     }),
@@ -80,7 +83,9 @@ export const userRouter = router({
   deleteAccount: protectedProcedure
     .input(z.object({ confirmEmail: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      if (input.confirmEmail.trim().toLowerCase() !== ctx.user.email.toLowerCase()) {
+      if (
+        input.confirmEmail.trim().toLowerCase() !== ctx.user.email.toLowerCase()
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Confirmation email does not match your account",

@@ -16,23 +16,31 @@ describe("normalizeHostname", () => {
 
 describe("extractYouTubeId", () => {
   it("reads from metadata.videoId when valid", () => {
-    expect(extractYouTubeId("https://example.com/x", { videoId: "dQw4w9WgXcQ" })).toBe(
-      "dQw4w9WgXcQ",
-    );
+    expect(
+      extractYouTubeId("https://example.com/x", { videoId: "dQw4w9WgXcQ" }),
+    ).toBe("dQw4w9WgXcQ");
   });
   it("rejects malformed metadata.videoId and falls back to URL", () => {
     expect(
-      extractYouTubeId("https://www.youtube.com/watch?v=dQw4w9WgXcQ", { videoId: "nope" }),
+      extractYouTubeId("https://www.youtube.com/watch?v=dQw4w9WgXcQ", {
+        videoId: "nope",
+      }),
     ).toBe("dQw4w9WgXcQ");
   });
   it("parses youtu.be short links", () => {
-    expect(extractYouTubeId("https://youtu.be/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
+    expect(extractYouTubeId("https://youtu.be/dQw4w9WgXcQ")).toBe(
+      "dQw4w9WgXcQ",
+    );
   });
   it("parses /shorts/", () => {
-    expect(extractYouTubeId("https://www.youtube.com/shorts/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
+    expect(extractYouTubeId("https://www.youtube.com/shorts/dQw4w9WgXcQ")).toBe(
+      "dQw4w9WgXcQ",
+    );
   });
   it("parses /embed/", () => {
-    expect(extractYouTubeId("https://www.youtube.com/embed/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
+    expect(extractYouTubeId("https://www.youtube.com/embed/dQw4w9WgXcQ")).toBe(
+      "dQw4w9WgXcQ",
+    );
   });
   it("returns null for non-YouTube URLs", () => {
     expect(extractYouTubeId("https://example.com/video.mp4")).toBeNull();

@@ -11,7 +11,8 @@ import { normalizeHostname } from "@kubertube/core/url";
 const FETCH_TIMEOUT_MS = 10_000;
 const MAX_REDIRECTS = 3;
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
-const USER_AGENT = "KuberTube-Reader/0.1 (+https://github.com/Abdygany/KuberTube)";
+const USER_AGENT =
+  "KuberTube-Reader/0.1 (+https://github.com/Abdygany/KuberTube)";
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const CACHE_MAX_ENTRIES = 50;
@@ -30,7 +31,9 @@ export type ReaderError =
   | { kind: "unsupported"; reason: string }
   | { kind: "parse_failed"; reason: string };
 
-export type ReaderResult = { ok: true; article: ParsedArticle } | { ok: false; error: ReaderError };
+export type ReaderResult =
+  | { ok: true; article: ParsedArticle }
+  | { ok: false; error: ReaderError };
 
 const LOCAL_HOSTS = new Set(["localhost", "0.0.0.0", "0", "::", "::1"]);
 
@@ -52,7 +55,10 @@ export async function parseArticle(url: string): Promise<ReaderResult> {
   try {
     parsed = new URL(url);
   } catch {
-    return { ok: false, error: { kind: "fetch_blocked", reason: "URL is not parsable" } };
+    return {
+      ok: false,
+      error: { kind: "fetch_blocked", reason: "URL is not parsable" },
+    };
   }
   const hostCheck = checkHostSafe(parsed);
   if (hostCheck) return { ok: false, error: hostCheck };
@@ -74,7 +80,10 @@ export async function parseArticle(url: string): Promise<ReaderResult> {
   } catch (err) {
     return {
       ok: false,
-      error: { kind: "parse_failed", reason: err instanceof Error ? err.message : "JSDOM failure" },
+      error: {
+        kind: "parse_failed",
+        reason: err instanceof Error ? err.message : "JSDOM failure",
+      },
     };
   }
 
@@ -94,22 +103,70 @@ export async function parseArticle(url: string): Promise<ReaderResult> {
   }
 
   if (!article || !article.content) {
-    return { ok: false, error: { kind: "parse_failed", reason: "Readability returned no content" } };
+    return {
+      ok: false,
+      error: {
+        kind: "parse_failed",
+        reason: "Readability returned no content",
+      },
+    };
   }
 
   const clean = DOMPurify.sanitize(article.content, {
     ALLOWED_TAGS: [
-      "h1", "h2", "h3", "h4", "h5", "h6",
-      "p", "br", "hr",
-      "ul", "ol", "li",
-      "blockquote", "pre", "code",
-      "em", "strong", "i", "b", "u",
-      "a", "img", "figure", "figcaption",
-      "table", "thead", "tbody", "tr", "th", "td",
-      "div", "span",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "p",
+      "br",
+      "hr",
+      "ul",
+      "ol",
+      "li",
+      "blockquote",
+      "pre",
+      "code",
+      "em",
+      "strong",
+      "i",
+      "b",
+      "u",
+      "a",
+      "img",
+      "figure",
+      "figcaption",
+      "table",
+      "thead",
+      "tbody",
+      "tr",
+      "th",
+      "td",
+      "div",
+      "span",
     ],
-    ALLOWED_ATTR: ["href", "src", "alt", "title", "loading", "referrerpolicy", "target", "rel"],
-    FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "input", "style", "link"],
+    ALLOWED_ATTR: [
+      "href",
+      "src",
+      "alt",
+      "title",
+      "loading",
+      "referrerpolicy",
+      "target",
+      "rel",
+    ],
+    FORBID_TAGS: [
+      "script",
+      "iframe",
+      "object",
+      "embed",
+      "form",
+      "input",
+      "style",
+      "link",
+    ],
     ALLOW_DATA_ATTR: false,
   });
 
@@ -148,25 +205,33 @@ function checkHostSafe(parsed: URL): ReaderError | null {
     return { kind: "fetch_blocked", reason: "Loopback hosts are blocked" };
   }
   if (isIP(host) && isPrivateIp(host)) {
-    return { kind: "fetch_blocked", reason: "Private/loopback IP literals are blocked" };
+    return {
+      kind: "fetch_blocked",
+      reason: "Private/loopback IP literals are blocked",
+    };
   }
   return null;
 }
 
 const SAFE_AGENT = new Agent({
   connect: {
-    lookup: async (hostname, _options, callback) => {
-      try {
-        const addrs = await dnsLookup(hostname, { all: true });
-        const safe = addrs.find((a) => !isPrivateIp(a.address));
-        if (!safe) {
-          callback(new Error(`Hostname ${hostname} resolves to a private IP`));
-          return;
-        }
-        callback(null, safe.address, safe.family);
-      } catch (err) {
-        callback(err instanceof Error ? err : new Error(String(err)));
-      }
+    lookup: (hostname, _options, callback) => {
+      dnsLookup(hostname, { all: true })
+        .then((addrs) => {
+          const safe = addrs.find((a) => !isPrivateIp(a.address));
+          if (!safe) {
+            callback(
+              new Error(`Hostname ${hostname} resolves to a private IP`),
+              "",
+              0,
+            );
+            return;
+          }
+          callback(null, safe.address, safe.family);
+        })
+        .catch((err: unknown) => {
+          callback(err instanceof Error ? err : new Error(String(err)), "", 0);
+        });
     },
   },
   headersTimeout: 5_000,
@@ -195,7 +260,10 @@ async function safeFetch(
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "unknown";
-      return { ok: false, error: { kind: "fetch_failed", reason: `Network: ${message}` } };
+      return {
+        ok: false,
+        error: { kind: "fetch_failed", reason: `Network: ${message}` },
+      };
     }
 
     const status = response.statusCode;
@@ -204,30 +272,57 @@ async function safeFetch(
       const location = response.headers["location"];
       const locStr = Array.isArray(location) ? location[0] : location;
       if (!locStr) {
-        return { ok: false, error: { kind: "fetch_failed", reason: `Redirect ${status} with no Location` } };
+        return {
+          ok: false,
+          error: {
+            kind: "fetch_failed",
+            reason: `Redirect ${status} with no Location`,
+          },
+        };
       }
       try {
         current = new URL(locStr, current);
       } catch {
-        return { ok: false, error: { kind: "fetch_failed", reason: "Redirect Location is malformed" } };
+        return {
+          ok: false,
+          error: {
+            kind: "fetch_failed",
+            reason: "Redirect Location is malformed",
+          },
+        };
       }
       continue;
     }
     if (status >= 400) {
       await response.body.dump();
-      return { ok: false, error: { kind: "fetch_failed", reason: `Upstream returned HTTP ${status}` } };
+      return {
+        ok: false,
+        error: {
+          kind: "fetch_failed",
+          reason: `Upstream returned HTTP ${status}`,
+        },
+      };
     }
     const contentType = String(response.headers["content-type"] ?? "");
-    if (!contentType.includes("text/html") && !contentType.includes("application/xhtml")) {
+    if (
+      !contentType.includes("text/html") &&
+      !contentType.includes("application/xhtml")
+    ) {
       await response.body.dump();
       return {
         ok: false,
-        error: { kind: "unsupported", reason: `Content-Type ${contentType || "unknown"} not supported` },
+        error: {
+          kind: "unsupported",
+          reason: `Content-Type ${contentType || "unknown"} not supported`,
+        },
       };
     }
     return readCappedBody(response);
   }
-  return { ok: false, error: { kind: "fetch_failed", reason: "Too many redirects" } };
+  return {
+    ok: false,
+    error: { kind: "fetch_failed", reason: "Too many redirects" },
+  };
 }
 
 async function readCappedBody(
@@ -244,7 +339,10 @@ async function readCappedBody(
       } catch {
         /* already partially consumed */
       }
-      return { ok: false, error: { kind: "unsupported", reason: "Body exceeds 5 MB" } };
+      return {
+        ok: false,
+        error: { kind: "unsupported", reason: "Body exceeds 5 MB" },
+      };
     }
     chunks.push(buf);
   }
@@ -260,7 +358,10 @@ export function isPrivateIp(addr: string): boolean {
 
 function isPrivateIPv4(addr: string): boolean {
   const parts = addr.split(".").map(Number);
-  if (parts.length !== 4 || parts.some((p) => !Number.isFinite(p) || p < 0 || p > 255)) {
+  if (
+    parts.length !== 4 ||
+    parts.some((p) => !Number.isFinite(p) || p < 0 || p > 255)
+  ) {
     return true;
   }
   const [a, b] = parts as [number, number, number, number];

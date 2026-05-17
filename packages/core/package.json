@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./crypto": "./src/crypto.ts",
     "./key-validators": "./src/key-validators.ts",
+    "./providers": "./src/providers.ts",
     "./filters": "./src/filters.ts",
     "./search": "./src/search.ts",
     "./search-types": "./src/search-types.ts",

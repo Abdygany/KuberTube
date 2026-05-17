@@ -5,7 +5,11 @@ import { notes, resources, workspaces, type Database } from "@kubertube/db";
 import { sanitizeNoteHtml } from "../../lib/markdown";
 import { protectedProcedure, router } from "../trpc";
 
-async function assertOwnsResource(db: Database, userId: string, resourceId: string) {
+async function assertOwnsResource(
+  db: Database,
+  userId: string,
+  resourceId: string,
+) {
   const [row] = await db
     .select({ id: resources.id })
     .from(resources)
@@ -56,7 +60,9 @@ export const notesRouter = router({
           updatedAt: notes.updatedAt,
         })
         .from(notes)
-        .where(and(eq(notes.resourceId, input.resourceId), isNull(notes.deletedAt)))
+        .where(
+          and(eq(notes.resourceId, input.resourceId), isNull(notes.deletedAt)),
+        )
         .orderBy(asc(notes.timestampSeconds), asc(notes.createdAt));
     }),
 

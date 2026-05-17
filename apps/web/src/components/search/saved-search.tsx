@@ -13,7 +13,8 @@ export function SavedSearch() {
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      const isCmdK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      const isCmdK =
+        (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
       if (isCmdK) {
         event.preventDefault();
         // No-op if our input is already focused.
@@ -21,12 +22,19 @@ export function SavedSearch() {
         // Don't steal focus from other inputs (note editor, settings forms, etc.).
         const active = document.activeElement;
         const tag = active instanceof HTMLElement ? active.tagName : "";
-        if (tag === "INPUT" || tag === "TEXTAREA" || (active as HTMLElement | null)?.isContentEditable) {
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          (active as HTMLElement | null)?.isContentEditable
+        ) {
           return;
         }
         inputRef.current?.focus();
         inputRef.current?.select();
-      } else if (event.key === "Escape" && document.activeElement === inputRef.current) {
+      } else if (
+        event.key === "Escape" &&
+        document.activeElement === inputRef.current
+      ) {
         setQuery("");
         inputRef.current?.blur();
       }
@@ -72,13 +80,17 @@ export function SavedSearch() {
       ) : null}
 
       {enabled && results.data && results.data.length === 0 ? (
-        <p className="text-xs text-muted">No matches for &quot;{debounced}&quot;.</p>
+        <p className="text-xs text-muted">
+          No matches for &quot;{debounced}&quot;.
+        </p>
       ) : null}
 
       {enabled && (results.data?.length ?? 0) > 0 ? (
         <ul className="space-y-2 rounded-md border border-border bg-card p-2">
           {(results.data ?? []).map((hit) => (
-            <li key={`${hit.kind}:${hit.resourceId}:${hit.savedAt.toISOString()}`}>
+            <li
+              key={`${hit.kind}:${hit.resourceId}:${hit.savedAt.toISOString()}`}
+            >
               <Link
                 href={`/app/workspaces/${hit.workspaceId}/resources/${hit.resourceId}`}
                 className="block rounded-md px-2 py-1.5 transition hover:bg-background"
@@ -89,7 +101,9 @@ export function SavedSearch() {
                     {hit.kind === "note" ? "note" : hit.workspaceTitle}
                   </span>
                   {hit.kind === "note" ? (
-                    <span className="text-[10px] text-muted">in {hit.workspaceTitle}</span>
+                    <span className="text-[10px] text-muted">
+                      in {hit.workspaceTitle}
+                    </span>
                   ) : null}
                 </div>
                 <p className="line-clamp-2 text-xs text-muted">{hit.snippet}</p>

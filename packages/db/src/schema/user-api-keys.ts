@@ -27,7 +27,9 @@ export const userApiKeys = pgTable(
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     lastValidatedAt: timestamp("last_validated_at", { withTimezone: true }),
     isValid: boolean("is_valid").notNull().default(false),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
     userProviderUnique: unique("user_api_keys_user_provider_unique").on(

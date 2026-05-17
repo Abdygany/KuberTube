@@ -22,7 +22,8 @@ export function ReaderView({ url, resourceId }: Props) {
     const stored = localStorage.getItem(SCROLL_KEY(resourceId));
     if (stored) {
       const y = Number(stored);
-      if (Number.isFinite(y) && y > 0) window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+      if (Number.isFinite(y) && y > 0)
+        window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
     }
   }, [parse.data, resourceId]);
 
@@ -64,7 +65,9 @@ export function ReaderView({ url, resourceId }: Props) {
   return (
     <article ref={containerRef} className="space-y-3">
       <header className="space-y-1">
-        <h2 className="font-serif text-2xl font-semibold leading-tight">{parse.data.title}</h2>
+        <h2 className="font-serif text-2xl font-semibold leading-tight">
+          {parse.data.title}
+        </h2>
         {parse.data.byline ? (
           <p className="text-xs text-muted">{parse.data.byline}</p>
         ) : null}

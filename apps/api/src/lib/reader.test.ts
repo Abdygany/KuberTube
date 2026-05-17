@@ -20,12 +20,16 @@ describe("isPrivateIp — IPv4", () => {
     expect(isPrivateIp(addr)).toBe(true);
   });
 
-  it.each(["8.8.8.8", "1.1.1.1", "172.32.0.1", "172.15.255.254", "100.63.255.254", "100.128.0.1"])(
-    "treats %s as public",
-    (addr) => {
-      expect(isPrivateIp(addr)).toBe(false);
-    },
-  );
+  it.each([
+    "8.8.8.8",
+    "1.1.1.1",
+    "172.32.0.1",
+    "172.15.255.254",
+    "100.63.255.254",
+    "100.128.0.1",
+  ])("treats %s as public", (addr) => {
+    expect(isPrivateIp(addr)).toBe(false);
+  });
 });
 
 describe("isPrivateIp — IPv6 (the SSRF bracket fix)", () => {

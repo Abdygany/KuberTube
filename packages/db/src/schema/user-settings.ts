@@ -1,4 +1,11 @@
-import { boolean, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import {
   balanceSchema,
   durationSchema,
@@ -24,6 +31,10 @@ export const userSettings = pgTable("user_settings", {
   uiTheme: themeEnum("ui_theme").notNull().default("system"),
   uiLanguage: text("ui_language").notNull().default("en"),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });

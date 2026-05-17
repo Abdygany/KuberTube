@@ -1,6 +1,11 @@
 import "server-only";
 
-import { createCipheriv, createDecipheriv, randomBytes, timingSafeEqual } from "node:crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  timingSafeEqual,
+} from "node:crypto";
 
 const ALGO = "aes-256-gcm";
 const IV_BYTES = 12;
@@ -16,7 +21,9 @@ export function parseMasterKey(input: string): Buffer {
     ? Buffer.from(trimmed, "hex")
     : Buffer.from(trimmed, "base64");
   if (key.length !== KEY_BYTES) {
-    throw new Error(`ENCRYPTION_KEY must decode to ${KEY_BYTES} bytes (got ${key.length})`);
+    throw new Error(
+      `ENCRYPTION_KEY must decode to ${KEY_BYTES} bytes (got ${key.length})`,
+    );
   }
   return key;
 }
@@ -28,22 +35,46 @@ export function parseMasterKey(input: string): Buffer {
  * `aad` is bound into the GCM auth tag, so a ciphertext from one row
  * cannot be transplanted into a different (userId, provider) row.
  */
-export function encryptSecret(plaintext: string, masterKey: Buffer, aad: string): string {
-  if (masterKey.length !== KEY_BYTES) throw new Error("master key must be 32 bytes");
+export function encryptSecret(
+  plaintext: string,
+  masterKey: Buffer,
+  aad: string,
+): string {
+  if (masterKey.length !== KEY_BYTES)
+    throw new Error("master key must be 32 bytes");
   const iv = randomBytes(IV_BYTES);
   const cipher = createCipheriv(ALGO, masterKey, iv);
   cipher.setAAD(Buffer.from(aad, "utf8"));
-  const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  const ciphertext = Buffer.concat([
+    cipher.update(plaintext, "utf8"),
+    cipher.final(),
+  ]);
   const tag = cipher.getAuthTag();
-  return [CURRENT_KEY_VERSION, b64url(iv), b64url(tag), b64url(ciphertext)].join(".");
+  return [
+    CURRENT_KEY_VERSION,
+    b64url(iv),
+    b64url(tag),
+    b64url(ciphertext),
+  ].join(".");
 }
 
-export function decryptSecret(packed: string, masterKey: Buffer, aad: string): string {
-  if (masterKey.length !== KEY_BYTES) throw new Error("master key must be 32 bytes");
+export function decryptSecret(
+  packed: string,
+  masterKey: Buffer,
+  aad: string,
+): string {
+  if (masterKey.length !== KEY_BYTES)
+    throw new Error("master key must be 32 bytes");
   const parts = packed.split(".");
   if (parts.length !== 4) throw new Error("malformed ciphertext payload");
-  const [version, ivB64, tagB64, ctB64] = parts as [string, string, string, string];
-  if (version !== CURRENT_KEY_VERSION) throw new Error(`unsupported ciphertext version: ${version}`);
+  const [version, ivB64, tagB64, ctB64] = parts as [
+    string,
+    string,
+    string,
+    string,
+  ];
+  if (version !== CURRENT_KEY_VERSION)
+    throw new Error(`unsupported ciphertext version: ${version}`);
   const iv = b64urlDecode(ivB64);
   const tag = b64urlDecode(tagB64);
   const ciphertext = b64urlDecode(ctB64);
@@ -53,7 +84,10 @@ export function decryptSecret(packed: string, masterKey: Buffer, aad: string): s
   const decipher = createDecipheriv(ALGO, masterKey, iv);
   decipher.setAAD(Buffer.from(aad, "utf8"));
   decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  return Buffer.concat([
+    decipher.update(ciphertext),
+    decipher.final(),
+  ]).toString("utf8");
 }
 
 /**
@@ -78,10 +112,17 @@ export function constantTimeEqual(a: string, b: string): boolean {
 }
 
 function b64url(buf: Buffer): string {
-  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return buf
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 function b64urlDecode(input: string): Buffer {
   const pad = input.length % 4 === 0 ? "" : "=".repeat(4 - (input.length % 4));
-  return Buffer.from(input.replace(/-/g, "+").replace(/_/g, "/") + pad, "base64");
+  return Buffer.from(
+    input.replace(/-/g, "+").replace(/_/g, "/") + pad,
+    "base64",
+  );
 }

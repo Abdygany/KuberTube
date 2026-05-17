@@ -80,7 +80,10 @@ export const keysRouter = router({
       await ctx.db
         .delete(userApiKeys)
         .where(
-          and(eq(userApiKeys.userId, ctx.user.id), eq(userApiKeys.provider, input.provider)),
+          and(
+            eq(userApiKeys.userId, ctx.user.id),
+            eq(userApiKeys.provider, input.provider),
+          ),
         );
       return { ok: true as const };
     }),
@@ -88,13 +91,21 @@ export const keysRouter = router({
   revalidate: protectedProcedure
     .input(z.object({ provider: providerSchema }))
     .mutation(async ({ ctx, input }) => {
-      const plain = await decryptUserKey(ctx.db, ctx.user.id, input.provider, ctx.masterKey);
+      const plain = await decryptUserKey(
+        ctx.db,
+        ctx.user.id,
+        input.provider,
+        ctx.masterKey,
+      );
       const validation = await validateKey(input.provider, plain);
       await ctx.db
         .update(userApiKeys)
         .set({ isValid: validation.valid, lastValidatedAt: new Date() })
         .where(
-          and(eq(userApiKeys.userId, ctx.user.id), eq(userApiKeys.provider, input.provider)),
+          and(
+            eq(userApiKeys.userId, ctx.user.id),
+            eq(userApiKeys.provider, input.provider),
+          ),
         );
       if (!validation.valid) {
         throw new TRPCError({

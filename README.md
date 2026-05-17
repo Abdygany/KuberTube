@@ -57,15 +57,15 @@ packages/
 
 ## Скрипты
 
-| Команда             | Описание                                  |
-| ------------------- | ----------------------------------------- |
-| `pnpm dev`          | web + api в watch-режиме (turbo)          |
-| `pnpm build`        | production-сборка всех воркспейсов        |
-| `pnpm lint`         | ESLint flat config                        |
-| `pnpm typecheck`    | `tsc --noEmit` во всех пакетах            |
-| `pnpm db:generate`  | сгенерировать новую миграцию по схеме     |
-| `pnpm db:migrate`   | применить миграции к `DATABASE_URL`       |
-| `pnpm db:studio`    | Drizzle Studio на http://local.drizzle.studio |
+| Команда            | Описание                                      |
+| ------------------ | --------------------------------------------- |
+| `pnpm dev`         | web + api в watch-режиме (turbo)              |
+| `pnpm build`       | production-сборка всех воркспейсов            |
+| `pnpm lint`        | ESLint flat config                            |
+| `pnpm typecheck`   | `tsc --noEmit` во всех пакетах                |
+| `pnpm db:generate` | сгенерировать новую миграцию по схеме         |
+| `pnpm db:migrate`  | применить миграции к `DATABASE_URL`           |
+| `pnpm db:studio`   | Drizzle Studio на http://local.drizzle.studio |
 
 ## Дальше
 

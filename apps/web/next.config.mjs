@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@kubertube/config", "@kubertube/core", "@kubertube/api-types"],
+  transpilePackages: [
+    "@kubertube/config",
+    "@kubertube/core",
+    "@kubertube/api-types",
+  ],
   experimental: {
     typedRoutes: true,
   },

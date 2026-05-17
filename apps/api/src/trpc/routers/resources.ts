@@ -41,7 +41,11 @@ function toResourceSource(provider: "youtube" | "brave"): "youtube" | "web" {
   return provider === "youtube" ? "youtube" : "web";
 }
 
-async function assertOwnsWorkspace(db: Database, userId: string, workspaceId: string) {
+async function assertOwnsWorkspace(
+  db: Database,
+  userId: string,
+  workspaceId: string,
+) {
   const [workspace] = await db
     .select({ id: workspaces.id })
     .from(workspaces)
@@ -64,7 +68,12 @@ export const resourcesRouter = router({
       return ctx.db
         .select(RESOURCE_SELECT)
         .from(resources)
-        .where(and(eq(resources.workspaceId, input.workspaceId), isNull(resources.deletedAt)))
+        .where(
+          and(
+            eq(resources.workspaceId, input.workspaceId),
+            isNull(resources.deletedAt),
+          ),
+        )
         .orderBy(desc(resources.savedAt));
     }),
 
@@ -77,12 +86,17 @@ export const resourcesRouter = router({
    * by `httpsUrl` and would never reach this handler.
    */
   add: protectedProcedure
-    .input(z.object({ workspaceId: z.string().uuid(), candidate: candidateSchema }))
+    .input(
+      z.object({ workspaceId: z.string().uuid(), candidate: candidateSchema }),
+    )
     .mutation(async ({ ctx, input }) => {
       await assertOwnsWorkspace(ctx.db, ctx.user.id, input.workspaceId);
       const url = canonicalUrl(input.candidate.url);
       if (!url) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Resource URL is invalid" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Resource URL is invalid",
+        });
       }
       const publishedAt = input.candidate.publishedAt
         ? new Date(input.candidate.publishedAt)
@@ -91,7 +105,12 @@ export const resourcesRouter = router({
       const [existing] = await ctx.db
         .select()
         .from(resources)
-        .where(and(eq(resources.workspaceId, input.workspaceId), eq(resources.url, url)))
+        .where(
+          and(
+            eq(resources.workspaceId, input.workspaceId),
+            eq(resources.url, url),
+          ),
+        )
         .limit(1);
 
       if (existing) {
@@ -220,7 +239,10 @@ export const resourcesRouter = router({
       await assertOwnsWorkspace(ctx.db, ctx.user.id, row.workspaceId);
 
       const now = new Date();
-      if (row.lastOpenedAt && now.getTime() - row.lastOpenedAt.getTime() < 2_000) {
+      if (
+        row.lastOpenedAt &&
+        now.getTime() - row.lastOpenedAt.getTime() < 2_000
+      ) {
         return { ok: true as const, throttled: true };
       }
 
@@ -229,7 +251,9 @@ export const resourcesRouter = router({
         .set({
           progressSeconds: input.progressSeconds,
           lastOpenedAt: now,
-          ...(input.isCompleted === undefined ? {} : { isCompleted: input.isCompleted }),
+          ...(input.isCompleted === undefined
+            ? {}
+            : { isCompleted: input.isCompleted }),
         })
         .where(eq(resources.id, input.id));
       return { ok: true as const, throttled: false };

@@ -1,4 +1,12 @@
-import { index, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { resources } from "./resources";
 
 export const summaryTypeEnum = pgEnum("summary_type", ["short", "detailed"]);
@@ -14,9 +22,14 @@ export const resourceSummaries = pgTable(
     summaryType: summaryTypeEnum("summary_type").notNull(),
     modelUsed: text("model_used").notNull(),
     tokensUsed: integer("tokens_used").notNull().default(0),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
-    resourceIdx: index("resource_summaries_resource_idx").on(table.resourceId, table.createdAt.desc()),
+    resourceIdx: index("resource_summaries_resource_idx").on(
+      table.resourceId,
+      table.createdAt.desc(),
+    ),
   }),
 );

@@ -33,7 +33,9 @@ export const workspacesRouter = router({
         lastOpenedAt: workspaces.lastOpenedAt,
       })
       .from(workspaces)
-      .where(and(eq(workspaces.userId, ctx.user.id), isNull(workspaces.deletedAt)))
+      .where(
+        and(eq(workspaces.userId, ctx.user.id), isNull(workspaces.deletedAt)),
+      )
       .orderBy(desc(workspaces.lastOpenedAt));
     return rows;
   }),
@@ -47,7 +49,12 @@ export const workspacesRouter = router({
         deletedAt: workspaces.deletedAt,
       })
       .from(workspaces)
-      .where(and(eq(workspaces.userId, ctx.user.id), isNotNull(workspaces.deletedAt)))
+      .where(
+        and(
+          eq(workspaces.userId, ctx.user.id),
+          isNotNull(workspaces.deletedAt),
+        ),
+      )
       .orderBy(desc(workspaces.deletedAt));
   }),
 
@@ -76,42 +83,46 @@ export const workspacesRouter = router({
       return row;
     }),
 
-  create: protectedProcedure.input(createInput).mutation(async ({ ctx, input }) => {
-    const [created] = await ctx.db
-      .insert(workspaces)
-      .values({
-        userId: ctx.user.id,
-        title: input.title,
-        goal: input.goal,
-        filtersJson: input.filters,
-      })
-      .returning();
-    if (!created) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    }
-    return created;
-  }),
+  create: protectedProcedure
+    .input(createInput)
+    .mutation(async ({ ctx, input }) => {
+      const [created] = await ctx.db
+        .insert(workspaces)
+        .values({
+          userId: ctx.user.id,
+          title: input.title,
+          goal: input.goal,
+          filtersJson: input.filters,
+        })
+        .returning();
+      if (!created) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      }
+      return created;
+    }),
 
-  update: protectedProcedure.input(updateInput).mutation(async ({ ctx, input }) => {
-    const { id, ...rest } = input;
-    const patch: Record<string, unknown> = { updatedAt: new Date() };
-    if (rest.title !== undefined) patch.title = rest.title;
-    if (rest.goal !== undefined) patch.goal = rest.goal;
-    if (rest.filters !== undefined) patch.filtersJson = rest.filters;
-    const [updated] = await ctx.db
-      .update(workspaces)
-      .set(patch)
-      .where(
-        and(
-          eq(workspaces.id, id),
-          eq(workspaces.userId, ctx.user.id),
-          isNull(workspaces.deletedAt),
-        ),
-      )
-      .returning();
-    if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
-    return updated;
-  }),
+  update: protectedProcedure
+    .input(updateInput)
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...rest } = input;
+      const patch: Record<string, unknown> = { updatedAt: new Date() };
+      if (rest.title !== undefined) patch.title = rest.title;
+      if (rest.goal !== undefined) patch.goal = rest.goal;
+      if (rest.filters !== undefined) patch.filtersJson = rest.filters;
+      const [updated] = await ctx.db
+        .update(workspaces)
+        .set(patch)
+        .where(
+          and(
+            eq(workspaces.id, id),
+            eq(workspaces.userId, ctx.user.id),
+            isNull(workspaces.deletedAt),
+          ),
+        )
+        .returning();
+      if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
+      return updated;
+    }),
 
   touch: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
@@ -153,7 +164,9 @@ export const workspacesRouter = router({
       const [row] = await ctx.db
         .update(workspaces)
         .set({ deletedAt: null })
-        .where(and(eq(workspaces.id, input.id), eq(workspaces.userId, ctx.user.id)))
+        .where(
+          and(eq(workspaces.id, input.id), eq(workspaces.userId, ctx.user.id)),
+        )
         .returning();
       if (!row) throw new TRPCError({ code: "NOT_FOUND" });
       return row;
@@ -201,7 +214,9 @@ export const workspacesRouter = router({
           isCompleted: resources.isCompleted,
         })
         .from(resources)
-        .where(and(eq(resources.workspaceId, input.id), isNull(resources.deletedAt)))
+        .where(
+          and(eq(resources.workspaceId, input.id), isNull(resources.deletedAt)),
+        )
         .orderBy(asc(resources.savedAt));
 
       const resourceIds = savedResources.map((r) => r.id);
@@ -214,7 +229,12 @@ export const workspacesRouter = router({
               timestampSeconds: notes.timestampSeconds,
             })
             .from(notes)
-            .where(and(inArray(notes.resourceId, resourceIds), isNull(notes.deletedAt)))
+            .where(
+              and(
+                inArray(notes.resourceId, resourceIds),
+                isNull(notes.deletedAt),
+              ),
+            )
             .orderBy(asc(notes.timestampSeconds), asc(notes.createdAt))
         : [];
 
@@ -230,14 +250,18 @@ export const workspacesRouter = router({
       lines.push("");
       lines.push(`> ${workspace.goal.replace(/\n/g, "\n> ")}`);
       lines.push("");
-      const filters = workspaceFiltersSchema.safeParse(workspace.filtersJson).data;
+      const filters = workspaceFiltersSchema.safeParse(
+        workspace.filtersJson,
+      ).data;
       if (filters) {
         lines.push(
           `_Filters: level=${filters.level}, duration=${filters.duration}, balance=${filters.balance}, freshness=${filters.freshness}_`,
         );
         lines.push("");
       }
-      lines.push(`_Created: ${workspace.createdAt.toISOString().slice(0, 10)}_`);
+      lines.push(
+        `_Created: ${workspace.createdAt.toISOString().slice(0, 10)}_`,
+      );
       lines.push("");
       lines.push("---");
       lines.push("");
@@ -251,9 +275,13 @@ export const workspacesRouter = router({
           const checkbox = resource.isCompleted ? "x" : " ";
           lines.push(`### [${checkbox}] ${resource.title}`);
           lines.push("");
-          const meta: string[] = [resource.source === "youtube" ? "YouTube" : "Web"];
-          if (resource.durationSeconds) meta.push(`${Math.round(resource.durationSeconds / 60)} min`);
-          if (resource.publishedAt) meta.push(resource.publishedAt.toISOString().slice(0, 10));
+          const meta: string[] = [
+            resource.source === "youtube" ? "YouTube" : "Web",
+          ];
+          if (resource.durationSeconds)
+            meta.push(`${Math.round(resource.durationSeconds / 60)} min`);
+          if (resource.publishedAt)
+            meta.push(resource.publishedAt.toISOString().slice(0, 10));
           lines.push(`_${meta.join(" · ")}_`);
           lines.push("");
           lines.push(resource.url);

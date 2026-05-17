@@ -29,13 +29,24 @@ async function main() {
     await db.transaction(async (tx) => {
       const workspaceResult = await tx
         .delete(workspaces)
-        .where(and(isNotNull(workspaces.deletedAt), lt(workspaces.deletedAt, cutoff)));
-      console.log(`  workspaces purged: ${workspaceResult.rowCount ?? 0} (cascades to children)`);
+        .where(
+          and(
+            isNotNull(workspaces.deletedAt),
+            lt(workspaces.deletedAt, cutoff),
+          ),
+        );
+      console.log(
+        `  workspaces purged: ${workspaceResult.rowCount ?? 0} (cascades to children)`,
+      );
 
       const resourceResult = await tx
         .delete(resources)
-        .where(and(isNotNull(resources.deletedAt), lt(resources.deletedAt, cutoff)));
-      console.log(`  resources purged (orphans): ${resourceResult.rowCount ?? 0}`);
+        .where(
+          and(isNotNull(resources.deletedAt), lt(resources.deletedAt, cutoff)),
+        );
+      console.log(
+        `  resources purged (orphans): ${resourceResult.rowCount ?? 0}`,
+      );
 
       const noteResult = await tx
         .delete(notes)

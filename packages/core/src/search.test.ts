@@ -3,7 +3,9 @@ import { canonicalUrl, parseIsoDuration } from "./search";
 
 describe("canonicalUrl", () => {
   it("keeps http(s) URLs", () => {
-    expect(canonicalUrl("https://example.com/path")).toBe("https://example.com/path");
+    expect(canonicalUrl("https://example.com/path")).toBe(
+      "https://example.com/path",
+    );
   });
   it("rejects javascript: schemes", () => {
     expect(canonicalUrl("javascript:alert(1)")).toBe("");
@@ -20,17 +22,25 @@ describe("canonicalUrl", () => {
     );
   });
   it("strips fbclid / gclid / msclkid", () => {
-    expect(canonicalUrl("https://example.com/?fbclid=abc&q=1")).toBe("https://example.com/?q=1");
-    expect(canonicalUrl("https://example.com/?gclid=abc")).toBe("https://example.com/");
+    expect(canonicalUrl("https://example.com/?fbclid=abc&q=1")).toBe(
+      "https://example.com/?q=1",
+    );
+    expect(canonicalUrl("https://example.com/?gclid=abc")).toBe(
+      "https://example.com/",
+    );
   });
   it("strips fragments", () => {
-    expect(canonicalUrl("https://example.com/x#frag")).toBe("https://example.com/x");
+    expect(canonicalUrl("https://example.com/x#frag")).toBe(
+      "https://example.com/x",
+    );
   });
   it("lowercases hostname", () => {
     expect(canonicalUrl("https://EXAMPLE.com/x")).toBe("https://example.com/x");
   });
   it("trims trailing slash but keeps root", () => {
-    expect(canonicalUrl("https://example.com/x/")).toBe("https://example.com/x");
+    expect(canonicalUrl("https://example.com/x/")).toBe(
+      "https://example.com/x",
+    );
     expect(canonicalUrl("https://example.com/")).toBe("https://example.com/");
   });
   it("returns empty for unparsable URLs", () => {

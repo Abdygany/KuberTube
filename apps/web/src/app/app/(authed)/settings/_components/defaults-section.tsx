@@ -12,11 +12,27 @@ import {
   type UserDefaults,
 } from "@kubertube/core/filters";
 
-const FIELDS: Array<{ key: keyof UserDefaults; label: string; options: readonly string[] }> = [
+const FIELDS: Array<{
+  key: keyof UserDefaults;
+  label: string;
+  options: readonly string[];
+}> = [
   { key: "defaultLevel", label: "Level", options: levelSchema.options },
-  { key: "defaultDuration", label: "Session duration", options: durationSchema.options },
-  { key: "defaultBalance", label: "Video/text balance", options: balanceSchema.options },
-  { key: "defaultFreshness", label: "Default freshness", options: freshnessSchema.options },
+  {
+    key: "defaultDuration",
+    label: "Session duration",
+    options: durationSchema.options,
+  },
+  {
+    key: "defaultBalance",
+    label: "Video/text balance",
+    options: balanceSchema.options,
+  },
+  {
+    key: "defaultFreshness",
+    label: "Default freshness",
+    options: freshnessSchema.options,
+  },
 ];
 
 export function DefaultsSection() {
@@ -74,7 +90,10 @@ function DefaultsForm({
               id={field.key}
               value={draft[field.key]}
               onChange={(e) =>
-                setDraft({ ...draft, [field.key]: e.target.value } as UserDefaults)
+                setDraft({
+                  ...draft,
+                  [field.key]: e.target.value,
+                } as UserDefaults)
               }
               className="h-10 rounded-md border border-border bg-card px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >

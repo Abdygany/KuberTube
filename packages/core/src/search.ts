@@ -8,7 +8,11 @@ import {
   type WorkspaceFilters,
 } from "./filters";
 import { decodeHtmlEntities, stripHtmlTags } from "./html";
-import type { ProviderError, ResourceCandidate, SearchProvider } from "./search-types";
+import type {
+  ProviderError,
+  ResourceCandidate,
+  SearchProvider,
+} from "./search-types";
 
 export type { ProviderError, ResourceCandidate, SearchProvider };
 
@@ -49,7 +53,10 @@ export interface SearchOutput {
  * `SEARCH_CACHE_SCHEMA_VERSION` so a deploy that changes the candidate
  * shape invalidates stale cache rows.
  */
-export function buildCacheKey(query: string, filters: WorkspaceFilters): string {
+export function buildCacheKey(
+  query: string,
+  filters: WorkspaceFilters,
+): string {
   return createHash("sha256")
     .update(
       JSON.stringify({
@@ -95,14 +102,21 @@ export async function runSearch(input: SearchInput): Promise<SearchOutput> {
       if (outcome.value.error) errors.push(outcome.value.error);
       perProvider.set(provider, outcome.value.results);
     } else {
-      const message = outcome.reason instanceof Error ? outcome.reason.message : "unknown";
-      errors.push({ provider, reason: `Unexpected error: ${message}`, persistent: false });
+      const message =
+        outcome.reason instanceof Error ? outcome.reason.message : "unknown";
+      errors.push({
+        provider,
+        reason: `Unexpected error: ${message}`,
+        persistent: false,
+      });
       perProvider.set(provider, []);
     }
   });
 
   return {
-    results: interleaveByProvider(input.providers.map((p) => perProvider.get(p) ?? [])),
+    results: interleaveByProvider(
+      input.providers.map((p) => perProvider.get(p) ?? []),
+    ),
     errors,
     perProvider,
   };
@@ -116,10 +130,15 @@ async function runProvider(
   if (!key) {
     return {
       results: [],
-      error: { provider, reason: `No API key configured for ${provider}`, persistent: true },
+      error: {
+        provider,
+        reason: `No API key configured for ${provider}`,
+        persistent: true,
+      },
     };
   }
-  if (provider === "youtube") return searchYouTube(input.query, input.filters, key);
+  if (provider === "youtube")
+    return searchYouTube(input.query, input.filters, key);
   return searchBrave(input.query, input.filters, key);
 }
 
@@ -171,7 +190,9 @@ async function searchYouTubeImpl(
   if (!searchResp.ok) {
     return { results: [], error: { provider: "youtube", ...searchResp.error } };
   }
-  const rawItems = Array.isArray(searchResp.data?.items) ? searchResp.data.items : [];
+  const rawItems = Array.isArray(searchResp.data?.items)
+    ? searchResp.data.items
+    : [];
   const ids: string[] = rawItems
     .map((it: unknown) => (it as { id?: { videoId?: string } }).id?.videoId)
     .filter((id: unknown): id is string => typeof id === "string");
@@ -190,7 +211,9 @@ async function searchYouTubeImpl(
     return { results: [], error: { provider: "youtube", ...enrichResp.error } };
   }
 
-  const enrichedItems = Array.isArray(enrichResp.data?.items) ? enrichResp.data.items : [];
+  const enrichedItems = Array.isArray(enrichResp.data?.items)
+    ? enrichResp.data.items
+    : [];
   const enrichedById = new Map<string, unknown>(
     enrichedItems
       .map((it: unknown) => {
@@ -204,22 +227,31 @@ async function searchYouTubeImpl(
   for (const id of ids) {
     const item = enrichedById.get(id);
     if (!item) continue; // dropped by enrichment → unwatchable, skip
-    const snippet = (item as { snippet?: Record<string, unknown> }).snippet ?? {};
-    const contentDetails = (item as { contentDetails?: { duration?: string } }).contentDetails;
-    const channelTitle = typeof snippet.channelTitle === "string" ? snippet.channelTitle : null;
-    const channelId = typeof snippet.channelId === "string" ? snippet.channelId : null;
+    const snippet =
+      (item as { snippet?: Record<string, unknown> }).snippet ?? {};
+    const contentDetails = (item as { contentDetails?: { duration?: string } })
+      .contentDetails;
+    const channelTitle =
+      typeof snippet.channelTitle === "string" ? snippet.channelTitle : null;
+    const channelId =
+      typeof snippet.channelId === "string" ? snippet.channelId : null;
     const thumb =
-      (snippet.thumbnails as Record<string, { url?: string }> | undefined)?.medium?.url ??
-      (snippet.thumbnails as Record<string, { url?: string }> | undefined)?.default?.url ??
+      (snippet.thumbnails as Record<string, { url?: string }> | undefined)
+        ?.medium?.url ??
+      (snippet.thumbnails as Record<string, { url?: string }> | undefined)
+        ?.default?.url ??
       null;
-    const publishedAt = typeof snippet.publishedAt === "string" ? snippet.publishedAt : null;
+    const publishedAt =
+      typeof snippet.publishedAt === "string" ? snippet.publishedAt : null;
     results.push({
       source: "youtube",
       type: "video",
       url: `https://www.youtube.com/watch?v=${id}`,
       title: decodeHtmlEntities(String(snippet.title ?? "Untitled")),
       description:
-        typeof snippet.description === "string" ? decodeHtmlEntities(snippet.description) : null,
+        typeof snippet.description === "string"
+          ? decodeHtmlEntities(snippet.description)
+          : null,
       thumbnailUrl: thumb,
       durationSeconds: parseIsoDuration(contentDetails?.duration),
       publishedAt,
@@ -259,7 +291,8 @@ export async function searchBrave(
     return { results: [], error: { provider: "brave", ...resp.error } };
   }
 
-  const web = (resp.data?.web as { results?: unknown[] } | undefined)?.results ?? [];
+  const web =
+    (resp.data?.web as { results?: unknown[] } | undefined)?.results ?? [];
   const seen = new Set<string>();
   const results: ResourceCandidate[] = [];
   for (const raw of web) {
@@ -268,7 +301,8 @@ export async function searchBrave(
     if (!url || seen.has(url)) continue;
     seen.add(url);
     const titleRaw = typeof item.title === "string" ? item.title : "Untitled";
-    const descRaw = typeof item.description === "string" ? item.description : null;
+    const descRaw =
+      typeof item.description === "string" ? item.description : null;
     const thumb =
       typeof (item.thumbnail as { src?: string } | undefined)?.src === "string"
         ? (item.thumbnail as { src: string }).src
@@ -297,13 +331,22 @@ export async function searchBrave(
 }
 
 type SafeJsonResult =
-  | { ok: true; data: { items?: unknown[]; web?: { results?: unknown[] } } & Record<string, unknown> }
+  | {
+      ok: true;
+      data: { items?: unknown[]; web?: { results?: unknown[] } } & Record<
+        string,
+        unknown
+      >;
+    }
   | {
       ok: false;
       error: { reason: string; persistent: boolean };
     };
 
-async function safeJson(url: string, init?: RequestInit): Promise<SafeJsonResult> {
+async function safeJson(
+  url: string,
+  init?: RequestInit,
+): Promise<SafeJsonResult> {
   try {
     const response = await fetch(url, init);
     if (!response.ok) {
@@ -328,7 +371,10 @@ async function safeJson(url: string, init?: RequestInit): Promise<SafeJsonResult
       }
       return {
         ok: false,
-        error: { reason: `Provider returned HTTP ${status}`, persistent: status < 500 },
+        error: {
+          reason: `Provider returned HTTP ${status}`,
+          persistent: status < 500,
+        },
       };
     }
     return { ok: true, data: (await response.json()) as never };
@@ -337,10 +383,16 @@ async function safeJson(url: string, init?: RequestInit): Promise<SafeJsonResult
     if (message.includes("aborted") || message.includes("timeout")) {
       return {
         ok: false,
-        error: { reason: "Provider did not respond within 5 seconds", persistent: false },
+        error: {
+          reason: "Provider did not respond within 5 seconds",
+          persistent: false,
+        },
       };
     }
-    return { ok: false, error: { reason: `Network error: ${message}`, persistent: false } };
+    return {
+      ok: false,
+      error: { reason: `Network error: ${message}`, persistent: false },
+    };
   }
 }
 
@@ -371,7 +423,9 @@ export function canonicalUrl(input: string): string {
   }
 }
 
-export function parseIsoDuration(value: string | undefined | null): number | null {
+export function parseIsoDuration(
+  value: string | undefined | null,
+): number | null {
   if (!value) return null;
   const match = /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(value);
   if (!match) return null;
@@ -383,4 +437,3 @@ export function parseIsoDuration(value: string | undefined | null): number | nul
   const total = days * 86400 + hours * 3600 + minutes * 60 + seconds;
   return Number.isFinite(total) && total > 0 ? total : null;
 }
-

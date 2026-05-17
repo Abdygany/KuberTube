@@ -31,8 +31,12 @@ export const resources = pgTable(
     thumbnailUrl: text("thumbnail_url"),
     durationSeconds: integer("duration_seconds"),
     publishedAt: timestamp("published_at", { withTimezone: true }),
-    metadataJson: jsonb("metadata_json").notNull().default(sql`'{}'::jsonb`),
-    savedAt: timestamp("saved_at", { withTimezone: true }).notNull().defaultNow(),
+    metadataJson: jsonb("metadata_json")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    savedAt: timestamp("saved_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     lastOpenedAt: timestamp("last_opened_at", { withTimezone: true }),
     progressSeconds: integer("progress_seconds").notNull().default(0),
     isCompleted: boolean("is_completed").notNull().default(false),

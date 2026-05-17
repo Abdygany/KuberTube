@@ -26,7 +26,9 @@ export default function SignInPage() {
       setError(signInError.message ?? "Invalid email or password");
       return;
     }
-    const next = sanitizeNextPath(new URLSearchParams(window.location.search).get("next"));
+    const next = sanitizeNextPath(
+      new URLSearchParams(window.location.search).get("next"),
+    );
     router.replace(next);
     router.refresh();
   }

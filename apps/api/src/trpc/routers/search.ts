@@ -41,13 +41,19 @@ async function readProviderCache(
     .select()
     .from(searchResultsCache)
     .where(
-      and(eq(searchResultsCache.queryHash, cacheKey), gt(searchResultsCache.expiresAt, now)),
+      and(
+        eq(searchResultsCache.queryHash, cacheKey),
+        gt(searchResultsCache.expiresAt, now),
+      ),
     );
   const hits = new Map<SearchProvider, ResourceCandidate[]>();
   const persistentMisses: SearchProvider[] = [];
   for (const row of rows) {
     if (!providers.includes(row.provider)) continue;
-    const payload = row.resultsJson as { results?: ResourceCandidate[]; tombstone?: string };
+    const payload = row.resultsJson as {
+      results?: ResourceCandidate[];
+      tombstone?: string;
+    };
     if (payload && Array.isArray(payload.results)) {
       hits.set(row.provider, payload.results);
     } else if (payload && typeof payload.tombstone === "string") {
@@ -125,10 +131,15 @@ export const searchRouter = router({
         .limit(1);
       if (!workspace) throw new TRPCError({ code: "NOT_FOUND" });
 
-      const filters: WorkspaceFilters = workspaceFiltersSchema.parse(workspace.filtersJson);
+      const filters: WorkspaceFilters = workspaceFiltersSchema.parse(
+        workspace.filtersJson,
+      );
       const query = (input.query ?? workspace.title).trim();
       if (query.length === 0) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Empty search query" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Empty search query",
+        });
       }
       const providers = providersForBalance(filters.balance);
       const cacheKey = buildCacheKey(query, filters);
@@ -142,7 +153,12 @@ export const searchRouter = router({
 
       let toFetch: SearchProvider[] = providers;
       if (!input.force) {
-        const cached = await readProviderCache(ctx.db, cacheKey, providers, now);
+        const cached = await readProviderCache(
+          ctx.db,
+          cacheKey,
+          providers,
+          now,
+        );
         for (const [p, results] of cached.hits) {
           perProvider.set(p, results);
           cacheHits.push(p);
@@ -160,7 +176,10 @@ export const searchRouter = router({
       }
 
       if (toFetch.length > 0) {
-        const keys: Record<SearchProvider, string | null> = { youtube: null, brave: null };
+        const keys: Record<SearchProvider, string | null> = {
+          youtube: null,
+          brave: null,
+        };
         for (const provider of toFetch) {
           try {
             keys[provider] = await decryptUserKey(
@@ -215,7 +234,9 @@ export const searchRouter = router({
         }
       }
 
-      const unified = interleaveByProvider(providers.map((p) => perProvider.get(p) ?? []));
+      const unified = interleaveByProvider(
+        providers.map((p) => perProvider.get(p) ?? []),
+      );
 
       await ctx.db.insert(searchQueries).values({
         workspaceId: workspace.id,
@@ -267,7 +288,10 @@ export const searchRouter = router({
             eq(workspaces.userId, userId),
             isNull(resources.deletedAt),
             isNull(workspaces.deletedAt),
-            or(ilike(resources.title, term), ilike(resources.description, term)),
+            or(
+              ilike(resources.title, term),
+              ilike(resources.description, term),
+            ),
           ),
         )
         .limit(50);

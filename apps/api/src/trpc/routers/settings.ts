@@ -10,7 +10,11 @@ const languageSchema = z.string().min(2).max(8);
 
 type SettingsPatch = Partial<typeof userSettings.$inferInsert>;
 
-async function upsertUserSettings(db: Database, userId: string, patch: SettingsPatch) {
+async function upsertUserSettings(
+  db: Database,
+  userId: string,
+  patch: SettingsPatch,
+) {
   await db
     .insert(userSettings)
     .values({ userId, ...patch })
@@ -61,7 +65,9 @@ export const settingsRouter = router({
   updateLanguage: protectedProcedure
     .input(z.object({ uiLanguage: languageSchema }))
     .mutation(async ({ ctx, input }) => {
-      await upsertUserSettings(ctx.db, ctx.user.id, { uiLanguage: input.uiLanguage });
+      await upsertUserSettings(ctx.db, ctx.user.id, {
+        uiLanguage: input.uiLanguage,
+      });
       return { ok: true as const };
     }),
 

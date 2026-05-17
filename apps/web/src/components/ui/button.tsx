@@ -26,11 +26,23 @@ const base =
   "inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium transition disabled:pointer-events-none disabled:opacity-50";
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", type, asChild = false, children, ...props }, ref) => {
+  (
+    {
+      className,
+      variant = "primary",
+      type,
+      asChild = false,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const classes = cn(base, variants[variant], className);
 
     if (asChild && isValidElement(children)) {
-      const child = Children.only(children) as ReactElement<{ className?: string }>;
+      const child = Children.only(children) as ReactElement<{
+        className?: string;
+      }>;
       return cloneElement(child, {
         ...props,
         className: cn(classes, child.props.className),

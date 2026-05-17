@@ -49,9 +49,15 @@ export function SummarySection({ resourceId }: { resourceId: string }) {
   return (
     <section className="mt-8 space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">AI summary</h2>
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted">
+          AI summary
+        </h2>
         <div className="flex gap-2">
-          <Button onClick={() => generate("short")} disabled={busy} className="h-8 px-2 text-xs">
+          <Button
+            onClick={() => generate("short")}
+            disabled={busy}
+            className="h-8 px-2 text-xs"
+          >
             <Sparkles className="mr-1 h-3 w-3" />
             {create.isPending ? "Summarizing..." : "Short summary"}
           </Button>
@@ -68,7 +74,9 @@ export function SummarySection({ resourceId }: { resourceId: string }) {
       </header>
 
       {create.error ? (
-        <p className="text-xs text-red-600 dark:text-red-400">{create.error.message}</p>
+        <p className="text-xs text-red-600 dark:text-red-400">
+          {create.error.message}
+        </p>
       ) : null}
 
       {summaries.data && summaries.data.length === 0 ? (
@@ -89,7 +97,8 @@ export function SummarySection({ resourceId }: { resourceId: string }) {
           >
             <header className="mb-2 flex items-center justify-between text-[11px] text-muted">
               <span className="font-mono">
-                {summary.summaryType} · {summary.modelUsed} · {summary.tokensUsed} tokens
+                {summary.summaryType} · {summary.modelUsed} ·{" "}
+                {summary.tokensUsed} tokens
               </span>
               <div className="flex items-center gap-2">
                 <span>{new Date(summary.createdAt).toLocaleString()}</span>

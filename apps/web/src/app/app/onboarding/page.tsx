@@ -17,9 +17,21 @@ interface Option<T> {
 }
 
 const levels: Option<UserDefaults["defaultLevel"]>[] = [
-  { value: "beginner", title: "Beginner", description: "Объяснение с нуля, шаг за шагом." },
-  { value: "intermediate", title: "Intermediate", description: "Уже знаешь основы, идёшь вглубь." },
-  { value: "advanced", title: "Advanced", description: "Только продвинутые материалы." },
+  {
+    value: "beginner",
+    title: "Beginner",
+    description: "Объяснение с нуля, шаг за шагом.",
+  },
+  {
+    value: "intermediate",
+    title: "Intermediate",
+    description: "Уже знаешь основы, идёшь вглубь.",
+  },
+  {
+    value: "advanced",
+    title: "Advanced",
+    description: "Только продвинутые материалы.",
+  },
 ];
 
 const durations: Option<UserDefaults["defaultDuration"]>[] = [
@@ -36,7 +48,11 @@ const balances: Option<UserDefaults["defaultBalance"]>[] = [
 
 const freshness: Option<WorkspaceFilters["freshness"]>[] = [
   { value: "any", title: "Any time", description: "Без фильтра по дате." },
-  { value: "2y", title: "Last 2 years", description: "Только относительно свежее." },
+  {
+    value: "2y",
+    title: "Last 2 years",
+    description: "Только относительно свежее.",
+  },
   { value: "1y", title: "Last year", description: "Свежее года." },
   { value: "6m", title: "Last 6 months", description: "Только самое новое." },
 ];
@@ -86,9 +102,10 @@ export default function OnboardingPage() {
           <div className="space-y-3">
             <h1 className="text-2xl font-semibold">Welcome to KuberTube</h1>
             <p className="text-sm leading-relaxed text-muted">
-              Это учебный workspace для целенаправленного изучения тем. Никаких лент,
-              автоплея и «похожих видео». Сейчас зададим дефолтные настройки твоего
-              профиля — их всегда можно изменить в Settings или при создании workspace.
+              Это учебный workspace для целенаправленного изучения тем. Никаких
+              лент, автоплея и «похожих видео». Сейчас зададим дефолтные
+              настройки твоего профиля — их всегда можно изменить в Settings или
+              при создании workspace.
             </p>
           </div>
         ) : null}
@@ -135,11 +152,19 @@ export default function OnboardingPage() {
       ) : null}
 
       <div className="mt-6 flex items-center justify-between">
-        <Button variant="ghost" onClick={back} disabled={step === 0 || complete.isPending}>
+        <Button
+          variant="ghost"
+          onClick={back}
+          disabled={step === 0 || complete.isPending}
+        >
           Back
         </Button>
         <Button onClick={next} disabled={complete.isPending}>
-          {step === total - 1 ? (complete.isPending ? "Saving..." : "Finish") : "Next"}
+          {step === total - 1
+            ? complete.isPending
+              ? "Saving..."
+              : "Finish"
+            : "Next"}
         </Button>
       </div>
     </div>

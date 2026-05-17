@@ -7,7 +7,10 @@ import { extractYouTubeId } from "@kubertube/core/url";
 import { NotesEditor } from "@/components/viewer/notes-editor";
 import { ReaderView } from "@/components/viewer/reader-view";
 import { SummarySection } from "@/components/viewer/summary-section";
-import { YouTubePlayer, type YouTubePlayerHandle } from "@/components/viewer/youtube-player";
+import {
+  YouTubePlayer,
+  type YouTubePlayerHandle,
+} from "@/components/viewer/youtube-player";
 import { trpc } from "@/lib/trpc/react";
 
 interface InitialResource {
@@ -37,7 +40,9 @@ export function ResourceViewer({
   const playerRef = useRef<YouTubePlayerHandle | null>(null);
 
   const videoId =
-    resource.type === "video" ? extractYouTubeId(resource.url, resource.metadata) : null;
+    resource.type === "video"
+      ? extractYouTubeId(resource.url, resource.metadata)
+      : null;
 
   const handleProgress = useCallback(
     (seconds: number, kind: "tick" | "pause" | "end") => {
@@ -51,7 +56,9 @@ export function ResourceViewer({
   );
 
   const getCurrentSeconds = useCallback(() => {
-    return playerRef.current ? Math.max(0, playerRef.current.getCurrentTime()) : 0;
+    return playerRef.current
+      ? Math.max(0, playerRef.current.getCurrentTime())
+      : 0;
   }, []);
 
   return (
@@ -64,7 +71,9 @@ export function ResourceViewer({
         Back to workspace
       </Link>
 
-      <h1 className="mt-3 text-xl font-semibold leading-tight">{resource.title}</h1>
+      <h1 className="mt-3 text-xl font-semibold leading-tight">
+        {resource.title}
+      </h1>
 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div>
@@ -103,7 +112,9 @@ export function ResourceViewer({
         <aside className="space-y-3">
           <NotesEditor
             resourceId={resource.id}
-            getCurrentSeconds={resource.type === "video" ? getCurrentSeconds : undefined}
+            getCurrentSeconds={
+              resource.type === "video" ? getCurrentSeconds : undefined
+            }
           />
         </aside>
       </div>

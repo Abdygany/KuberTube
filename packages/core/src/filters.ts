@@ -34,7 +34,9 @@ export const defaultFilters: WorkspaceFilters = {
 };
 
 /** RFC 3339 lower bound for `freshness`, or `null` for "any time". */
-export function freshnessToPublishedAfter(value: WorkspaceFilters["freshness"]): string | null {
+export function freshnessToPublishedAfter(
+  value: WorkspaceFilters["freshness"],
+): string | null {
   if (value === "any") return null;
   const now = Date.now();
   const months = value === "6m" ? 6 : value === "1y" ? 12 : 24;
@@ -43,7 +45,9 @@ export function freshnessToPublishedAfter(value: WorkspaceFilters["freshness"]):
 }
 
 /** Brave's freshness param — `pd|pw|pm|py` or an absolute range for sub-year windows. */
-export function freshnessToBraveParam(value: WorkspaceFilters["freshness"]): string | null {
+export function freshnessToBraveParam(
+  value: WorkspaceFilters["freshness"],
+): string | null {
   if (value === "any") return null;
   if (value === "6m") {
     const end = new Date();
@@ -54,11 +58,15 @@ export function freshnessToBraveParam(value: WorkspaceFilters["freshness"]): str
 }
 
 /** YouTube's `videoDuration` accepts our short/medium/long verbatim. */
-export function durationToYouTubeParam(value: WorkspaceFilters["duration"]): string {
+export function durationToYouTubeParam(
+  value: WorkspaceFilters["duration"],
+): string {
   return value;
 }
 
-export function providersForBalance(value: WorkspaceFilters["balance"]): Array<"youtube" | "brave"> {
+export function providersForBalance(
+  value: WorkspaceFilters["balance"],
+): Array<"youtube" | "brave"> {
   if (value === "video") return ["youtube"];
   if (value === "text") return ["brave"];
   return ["youtube", "brave"];

@@ -38,15 +38,20 @@ export function htmlToMarkdown(html: string): string {
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?<\/style>/gi, "");
   out = out.replace(/<br\s*\/?>/gi, "\n");
-  out = out.replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi, (_, level: string, body: string) => {
-    const hashes = "#".repeat(Number(level));
-    return `\n\n${hashes} ${body.trim()}\n\n`;
-  });
-  out = out.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, body: string) =>
-    body
-      .split("\n")
-      .map((l) => `> ${l}`)
-      .join("\n"),
+  out = out.replace(
+    /<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi,
+    (_, level: string, body: string) => {
+      const hashes = "#".repeat(Number(level));
+      return `\n\n${hashes} ${body.trim()}\n\n`;
+    },
+  );
+  out = out.replace(
+    /<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi,
+    (_, body: string) =>
+      body
+        .split("\n")
+        .map((l) => `> ${l}`)
+        .join("\n"),
   );
   out = out.replace(/<(strong|b)[^>]*>([\s\S]*?)<\/\1>/gi, "**$2**");
   out = out.replace(/<(em|i)[^>]*>([\s\S]*?)<\/\1>/gi, "*$2*");
@@ -75,7 +80,10 @@ export function htmlToMarkdown(html: string): string {
  * paragraph or sentence break within 500 chars so the cut isn't
  * mid-sentence. If `maxChars < 500`, searches the whole prefix.
  */
-export function truncateAtBoundary(text: string, maxChars: number): {
+export function truncateAtBoundary(
+  text: string,
+  maxChars: number,
+): {
   text: string;
   truncated: boolean;
 } {
@@ -87,5 +95,8 @@ export function truncateAtBoundary(text: string, maxChars: number): {
   const lastSentence = window.lastIndexOf(". ");
   const bestRelative = Math.max(lastPara, lastSentence);
   if (bestRelative === -1) return { text: hard, truncated: true };
-  return { text: hard.slice(0, windowStart + bestRelative + 2), truncated: true };
+  return {
+    text: hard.slice(0, windowStart + bestRelative + 2),
+    truncated: true,
+  };
 }

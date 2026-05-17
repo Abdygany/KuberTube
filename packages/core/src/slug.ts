@@ -3,7 +3,10 @@
  * Cyrillic letters, replaces every other character with `-`, collapses
  * runs, trims, and caps length.
  */
-export function slugify(title: string, options: { maxLen?: number } = {}): string {
+export function slugify(
+  title: string,
+  options: { maxLen?: number } = {},
+): string {
   const maxLen = options.maxLen ?? 60;
   const collapsed = title
     .toLowerCase()

@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { resources } from "./resources";
 
 export const notes = pgTable(
@@ -12,8 +19,12 @@ export const notes = pgTable(
     contentMd: text("content_md").notNull().default(""),
     /** Null for the main note; set for timecode-anchored notes on videos. */
     timestampSeconds: integer("timestamp_seconds"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => ({

@@ -1,6 +1,14 @@
 "use client";
 
-import { Check, ExternalLink, FileText, Play, Plus, Trash2, Video } from "lucide-react";
+import {
+  Check,
+  ExternalLink,
+  FileText,
+  Play,
+  Plus,
+  Trash2,
+  Video,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatSeconds } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -15,7 +23,14 @@ export interface DisplayResource {
   thumbnailUrl?: string | null;
   durationSeconds?: number | null;
   publishedAt?: string | Date | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: unknown;
+}
+
+function readMetadataField(metadata: unknown, key: string): unknown {
+  if (metadata && typeof metadata === "object" && key in metadata) {
+    return (metadata as Record<string, unknown>)[key];
+  }
+  return undefined;
 }
 
 interface BaseProps {
@@ -42,13 +57,20 @@ export type ResourceCardProps = SuggestionProps | SavedProps;
 export function ResourceCard(props: ResourceCardProps) {
   const { resource, busy } = props;
   const isVideo = resource.type === "video";
-  const duration = isVideo && resource.durationSeconds ? formatSeconds(resource.durationSeconds) : null;
-  const published = resource.publishedAt ? new Date(resource.publishedAt) : null;
-  const channel =
-    resource.source === "youtube" && typeof resource.metadata?.channelTitle === "string"
-      ? resource.metadata.channelTitle
+  const duration =
+    isVideo && resource.durationSeconds
+      ? formatSeconds(resource.durationSeconds)
       : null;
-  const domain = resource.source !== "youtube" ? domainFromMetadataOrUrl(resource) : null;
+  const published = resource.publishedAt
+    ? new Date(resource.publishedAt)
+    : null;
+  const channelRaw =
+    resource.source === "youtube"
+      ? readMetadataField(resource.metadata, "channelTitle")
+      : null;
+  const channel = typeof channelRaw === "string" ? channelRaw : null;
+  const domain =
+    resource.source !== "youtube" ? domainFromMetadataOrUrl(resource) : null;
   const sourceLabel = resource.source === "youtube" ? "YouTube" : "Web";
   const isCompleted = props.variant === "saved" ? props.isCompleted : false;
 
@@ -61,7 +83,6 @@ export function ResourceCard(props: ResourceCardProps) {
     >
       <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded bg-background">
         {resource.thumbnailUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={resource.thumbnailUrl}
             alt=""
@@ -70,7 +91,11 @@ export function ResourceCard(props: ResourceCardProps) {
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted">
-            {isVideo ? <Video className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
+            {isVideo ? (
+              <Video className="h-6 w-6" />
+            ) : (
+              <FileText className="h-6 w-6" />
+            )}
           </div>
         )}
         {duration ? (
@@ -82,7 +107,9 @@ export function ResourceCard(props: ResourceCardProps) {
 
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug">{resource.title}</h3>
+          <h3 className="line-clamp-2 text-sm font-medium leading-snug">
+            {resource.title}
+          </h3>
           <a
             href={resource.url}
             target="_blank"
@@ -94,11 +121,17 @@ export function ResourceCard(props: ResourceCardProps) {
           </a>
         </div>
         {resource.description ? (
-          <p className="line-clamp-2 text-xs text-muted">{resource.description}</p>
+          <p className="line-clamp-2 text-xs text-muted">
+            {resource.description}
+          </p>
         ) : null}
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted">
           <span className="inline-flex items-center gap-1">
-            {isVideo ? <Play className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+            {isVideo ? (
+              <Play className="h-3 w-3" />
+            ) : (
+              <FileText className="h-3 w-3" />
+            )}
             {sourceLabel}
           </span>
           {channel ? <span>· {channel}</span> : null}
@@ -129,7 +162,11 @@ export function ResourceCard(props: ResourceCardProps) {
           ) : (
             <>
               {props.onOpen ? (
-                <Button onClick={props.onOpen} disabled={busy} className="h-8 px-2 text-xs">
+                <Button
+                  onClick={props.onOpen}
+                  disabled={busy}
+                  className="h-8 px-2 text-xs"
+                >
                   Open
                 </Button>
               ) : null}
@@ -139,7 +176,12 @@ export function ResourceCard(props: ResourceCardProps) {
                 disabled={busy}
                 className="h-8 px-2 text-xs"
               >
-                <Check className={cn("mr-1 h-3 w-3", props.isCompleted && "text-emerald-600")} />
+                <Check
+                  className={cn(
+                    "mr-1 h-3 w-3",
+                    props.isCompleted && "text-emerald-600",
+                  )}
+                />
                 {props.isCompleted ? "Completed" : "Mark complete"}
               </Button>
               <Button
@@ -160,7 +202,8 @@ export function ResourceCard(props: ResourceCardProps) {
 }
 
 function domainFromMetadataOrUrl(resource: DisplayResource): string | null {
-  if (typeof resource.metadata?.domain === "string") return resource.metadata.domain;
+  const domain = readMetadataField(resource.metadata, "domain");
+  if (typeof domain === "string") return domain;
   try {
     return new URL(resource.url).hostname;
   } catch {

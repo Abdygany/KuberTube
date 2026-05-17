@@ -28,13 +28,18 @@ export function DangerZone() {
   });
 
   const expectedEmail = me.email;
-  const canDelete = confirmEmail.trim().toLowerCase() === expectedEmail.toLowerCase();
+  const canDelete =
+    confirmEmail.trim().toLowerCase() === expectedEmail.toLowerCase();
 
   return (
     <section className="space-y-3">
       <header>
-        <h2 className="text-lg font-medium text-red-600 dark:text-red-400">Danger zone</h2>
-        <p className="text-xs text-muted">Полное стирание аккаунта без возможности восстановления.</p>
+        <h2 className="text-lg font-medium text-red-600 dark:text-red-400">
+          Danger zone
+        </h2>
+        <p className="text-xs text-muted">
+          Полное стирание аккаунта без возможности восстановления.
+        </p>
       </header>
 
       {!opened ? (
@@ -45,11 +50,14 @@ export function DangerZone() {
       ) : (
         <div className="space-y-3 rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
           <p className="text-sm">
-            Это удалит пользователя <strong>{expectedEmail}</strong> и все привязанные workspaces,
-            сохранённые ресурсы, заметки и API-ключи. Это действие нельзя отменить.
+            Это удалит пользователя <strong>{expectedEmail}</strong> и все
+            привязанные workspaces, сохранённые ресурсы, заметки и API-ключи.
+            Это действие нельзя отменить.
           </p>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="confirmEmail">Введите свой email чтобы подтвердить</Label>
+            <Label htmlFor="confirmEmail">
+              Введите свой email чтобы подтвердить
+            </Label>
             <Input
               id="confirmEmail"
               value={confirmEmail}
@@ -74,11 +82,15 @@ export function DangerZone() {
               onClick={() => deleteAccount.mutate({ confirmEmail })}
               disabled={!canDelete || deleteAccount.isPending}
             >
-              {deleteAccount.isPending ? "Deleting..." : "Permanently delete account"}
+              {deleteAccount.isPending
+                ? "Deleting..."
+                : "Permanently delete account"}
             </Button>
           </div>
           {deleteAccount.error ? (
-            <p className="text-xs text-red-700 dark:text-red-300">{deleteAccount.error.message}</p>
+            <p className="text-xs text-red-700 dark:text-red-300">
+              {deleteAccount.error.message}
+            </p>
           ) : null}
         </div>
       )}

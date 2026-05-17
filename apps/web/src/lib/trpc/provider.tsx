@@ -25,7 +25,8 @@ export function TRPCProvider({ children }: { children: ReactNode }) {
       links: [
         loggerLink({
           enabled: (opts) =>
-            (process.env.NODE_ENV === "development" && typeof window !== "undefined") ||
+            (process.env.NODE_ENV === "development" &&
+              typeof window !== "undefined") ||
             (opts.direction === "down" && opts.result instanceof Error),
         }),
         httpBatchLink({

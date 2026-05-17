@@ -8,7 +8,11 @@ export interface Context {
   masterKey: Buffer;
 }
 
-export async function createContext({ req }: { req: Request }): Promise<Context> {
+export async function createContext({
+  req,
+}: {
+  req: Request;
+}): Promise<Context> {
   const session = await auth.api.getSession({ headers: req.headers });
   return {
     db: getDb(env.DATABASE_URL),

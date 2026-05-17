@@ -31,7 +31,9 @@ export interface MessagesResponse {
  * errors as user-facing PRECONDITION_FAILED so the UI can point at
  * Settings → API keys instead of leaking the raw provider body.
  */
-export async function callAnthropicMessages(req: MessagesRequest): Promise<MessagesResponse> {
+export async function callAnthropicMessages(
+  req: MessagesRequest,
+): Promise<MessagesResponse> {
   const body = {
     model: req.model,
     max_tokens: req.maxTokens,
@@ -55,7 +57,8 @@ export async function callAnthropicMessages(req: MessagesRequest): Promise<Messa
     if (message.includes("aborted") || message.includes("timeout")) {
       throw new TRPCError({
         code: "TIMEOUT",
-        message: "Anthropic did not respond within 30 seconds. Try again or shorten the input.",
+        message:
+          "Anthropic did not respond within 30 seconds. Try again or shorten the input.",
       });
     }
     throw new TRPCError({

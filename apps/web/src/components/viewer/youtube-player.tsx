@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import YouTube, { type YouTubePlayer as Player, type YouTubeEvent } from "react-youtube";
+import YouTube, {
+  type YouTubePlayer as Player,
+  type YouTubeEvent,
+} from "react-youtube";
 
 export interface YouTubePlayerHandle {
   getCurrentTime(): number;
@@ -39,7 +42,10 @@ export function YouTubePlayer({
       const player = playerRef.current;
       if (!player) return;
       // 1 === PLAYING per YouTube IFrame API state codes.
-      if (typeof player.getPlayerState === "function" && player.getPlayerState() === 1) {
+      if (
+        typeof player.getPlayerState === "function" &&
+        player.getPlayerState() === 1
+      ) {
         onProgressRef.current?.(player.getCurrentTime(), "tick");
       }
     }, progressIntervalMs);
@@ -95,7 +101,10 @@ export function YouTubePlayer({
             modestbranding: 1,
             iv_load_policy: 3,
             enablejsapi: 1,
-            origin: typeof window === "undefined" ? undefined : window.location.origin,
+            origin:
+              typeof window === "undefined"
+                ? undefined
+                : window.location.origin,
           },
         }}
         onReady={handleReady}

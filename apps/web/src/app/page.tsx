@@ -6,13 +6,17 @@ export default function LandingPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <header className="space-y-4">
-        <p className="text-xs uppercase tracking-widest text-muted">KuberTube</p>
+        <p className="text-xs uppercase tracking-widest text-muted">
+          KuberTube
+        </p>
         <h1 className="text-balance text-3xl font-semibold leading-tight md:text-5xl">
-          Учебный workspace для целенаправленного изучения тем — без рекомендаций, лент и автоплея.
+          Учебный workspace для целенаправленного изучения тем — без
+          рекомендаций, лент и автоплея.
         </h1>
         <p className="text-balance text-base text-muted md:text-lg">
-          Продукт не борется за внимание пользователя — он его защищает. Это не «ещё один
-          AI-помощник для обучения». Это место, куда приходят с намерением изучить что-то.
+          Продукт не борется за внимание пользователя — он его защищает. Это не
+          «ещё один AI-помощник для обучения». Это место, куда приходят с
+          намерением изучить что-то.
         </p>
       </header>
 
@@ -38,20 +42,26 @@ export default function LandingPage() {
       </nav>
 
       <section className="mt-20 space-y-4">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-muted">The problem</h2>
+        <h2 className="text-xs font-medium uppercase tracking-widest text-muted">
+          The problem
+        </h2>
         <p className="text-base leading-relaxed">
-          Хочешь разобраться в трансформерах к завтрашнему семинару — открываешь YouTube. Через
-          двадцать минут ты смотришь, как кот играет на пианино. Сорок минут на поиск двух
-          годных статей, ещё двадцать минут — на возврат к теме.
+          Хочешь разобраться в трансформерах к завтрашнему семинару — открываешь
+          YouTube. Через двадцать минут ты смотришь, как кот играет на пианино.
+          Сорок минут на поиск двух годных статей, ещё двадцать минут — на
+          возврат к теме.
         </p>
         <p className="text-base leading-relaxed text-muted">
-          Это не дефект самоконтроля, это работа алгоритма. Платформы зарабатывают на твоём
-          времени и оптимизируют интерфейс под удержание. У учебного намерения нет шансов.
+          Это не дефект самоконтроля, это работа алгоритма. Платформы
+          зарабатывают на твоём времени и оптимизируют интерфейс под удержание.
+          У учебного намерения нет шансов.
         </p>
       </section>
 
       <section className="mt-12 space-y-4">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-muted">How KuberTube works</h2>
+        <h2 className="text-xs font-medium uppercase tracking-widest text-muted">
+          How KuberTube works
+        </h2>
         <div className="grid gap-4 md:grid-cols-2">
           <Feature
             icon={<BookOpen className="h-5 w-5" />}
@@ -77,21 +87,27 @@ export default function LandingPage() {
       </section>
 
       <section className="mt-12 space-y-4">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-muted">FAQ</h2>
+        <h2 className="text-xs font-medium uppercase tracking-widest text-muted">
+          FAQ
+        </h2>
         <Disclosure question="Что мне нужно, чтобы начать?">
-          Зарегистрироваться и добавить два бесплатных API-ключа: YouTube Data API (10k запросов/день free)
-          и Brave Search (2000 запросов/мес free). Anthropic — опционально, для AI-резюме в будущих фазах.
+          Зарегистрироваться и добавить два бесплатных API-ключа: YouTube Data
+          API (10k запросов/день free) и Brave Search (2000 запросов/мес free).
+          Anthropic — опционально, для AI-резюме в будущих фазах.
         </Disclosure>
         <Disclosure question="Реклама в видео YouTube — есть?">
-          Да, на монетизированных видео реклама остаётся — YouTube IFrame API её не отключает. Мы
-          предпочитаем академические каналы в подборке, но обещать «полностью без рекламы» нечестно.
+          Да, на монетизированных видео реклама остаётся — YouTube IFrame API её
+          не отключает. Мы предпочитаем академические каналы в подборке, но
+          обещать «полностью без рекламы» нечестно.
         </Disclosure>
         <Disclosure question="Куда уходят данные?">
-          Email, заметки, метаданные ресурсов — в твою БД (или в нашу, если используешь хостинг).
-          Содержимое статей не сохраняется (copyright). API-ключи зашифрованы AES-256-GCM с per-row AAD.
+          Email, заметки, метаданные ресурсов — в твою БД (или в нашу, если
+          используешь хостинг). Содержимое статей не сохраняется (copyright).
+          API-ключи зашифрованы AES-256-GCM с per-row AAD.
         </Disclosure>
         <Disclosure question="Это open source?">
-          Да. MIT-лицензия, код на GitHub. Можно self-host через Docker Compose — см. /docs.
+          Да. MIT-лицензия, код на GitHub. Можно self-host через Docker Compose
+          — см. /docs.
         </Disclosure>
       </section>
 
@@ -102,7 +118,15 @@ export default function LandingPage() {
   );
 }
 
-function Feature({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+function Feature({
+  icon,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
   return (
     <article className="rounded-md border border-border bg-card p-4">
       <div className="flex items-center gap-2 text-sm font-medium">
@@ -113,4 +137,3 @@ function Feature({ icon, title, body }: { icon: React.ReactNode; title: string; 
     </article>
   );
 }
-

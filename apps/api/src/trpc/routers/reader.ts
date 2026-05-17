@@ -27,22 +27,26 @@ export const readerRouter = router({
    * can't enumerate internal IPs from the response body. Server
    * logs retain detail.
    */
-  parse: protectedProcedure.input(z.object({ url: httpsUrlSchema })).query(async ({ input }) => {
-    const result = await parseArticle(input.url);
-    if (!result.ok) {
-      console.warn(
-        `reader.parse failed for ${input.url}: ${result.error.kind} — ${result.error.reason}`,
-      );
-      const message =
-        READER_USER_MESSAGES[result.error.kind] ?? "Reader is unavailable for this URL.";
-      throw new TRPCError({
-        code:
-          result.error.kind === "fetch_blocked" || result.error.kind === "unsupported"
-            ? "BAD_REQUEST"
-            : "PRECONDITION_FAILED",
-        message,
-      });
-    }
-    return result.article;
-  }),
+  parse: protectedProcedure
+    .input(z.object({ url: httpsUrlSchema }))
+    .query(async ({ input }) => {
+      const result = await parseArticle(input.url);
+      if (!result.ok) {
+        console.warn(
+          `reader.parse failed for ${input.url}: ${result.error.kind} — ${result.error.reason}`,
+        );
+        const message =
+          READER_USER_MESSAGES[result.error.kind] ??
+          "Reader is unavailable for this URL.";
+        throw new TRPCError({
+          code:
+            result.error.kind === "fetch_blocked" ||
+            result.error.kind === "unsupported"
+              ? "BAD_REQUEST"
+              : "PRECONDITION_FAILED",
+          message,
+        });
+      }
+      return result.article;
+    }),
 });

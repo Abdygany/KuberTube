@@ -20,7 +20,9 @@ export async function decryptUserKey(
   const [row] = await db
     .select()
     .from(userApiKeys)
-    .where(and(eq(userApiKeys.userId, userId), eq(userApiKeys.provider, provider)))
+    .where(
+      and(eq(userApiKeys.userId, userId), eq(userApiKeys.provider, provider)),
+    )
     .limit(1);
   if (!row) {
     throw new TRPCError({
@@ -30,7 +32,11 @@ export async function decryptUserKey(
   }
   let plain: string;
   try {
-    plain = decryptSecret(row.encryptedKey, masterKey, apiKeyAad(userId, provider));
+    plain = decryptSecret(
+      row.encryptedKey,
+      masterKey,
+      apiKeyAad(userId, provider),
+    );
   } catch {
     await db
       .update(userApiKeys)

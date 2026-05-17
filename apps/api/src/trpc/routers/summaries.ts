@@ -1,8 +1,16 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { resources, resourceSummaries, workspaces, type Database } from "@kubertube/db";
-import { callAnthropicMessages, DEFAULT_SUMMARY_MODEL } from "../../lib/anthropic";
+import {
+  resources,
+  resourceSummaries,
+  workspaces,
+  type Database,
+} from "@kubertube/db";
+import {
+  callAnthropicMessages,
+  DEFAULT_SUMMARY_MODEL,
+} from "../../lib/anthropic";
 import { renderMarkdownToSafeHtml } from "../../lib/markdown";
 import { parseArticle } from "../../lib/reader";
 import { htmlToPlainText, truncateAtBoundary } from "../../lib/text";
@@ -89,7 +97,8 @@ async function buildPrompt(resource: ResourceForSummary): Promise<{
     typeof resource.metadata === "object" &&
     resource.metadata !== null &&
     "channelTitle" in resource.metadata &&
-    typeof (resource.metadata as { channelTitle?: unknown }).channelTitle === "string"
+    typeof (resource.metadata as { channelTitle?: unknown }).channelTitle ===
+      "string"
       ? (resource.metadata as { channelTitle: string }).channelTitle
       : null;
   const message = `# ${resource.title}\n\n${channelTitle ? `Channel: ${channelTitle}\n\n` : ""}${resource.description ?? "(no description)"}\n\nNote: this is a YouTube video. You're only seeing the title, channel, and description — there is no transcript.`;
@@ -134,11 +143,22 @@ export const summariesRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const resource = await loadResource(ctx.db, ctx.user.id, input.resourceId);
-      const apiKey = await decryptUserKey(ctx.db, ctx.user.id, "anthropic", ctx.masterKey);
+      const resource = await loadResource(
+        ctx.db,
+        ctx.user.id,
+        input.resourceId,
+      );
+      const apiKey = await decryptUserKey(
+        ctx.db,
+        ctx.user.id,
+        "anthropic",
+        ctx.masterKey,
+      );
       const { userMessage, truncated } = await buildPrompt(resource);
       const system = `You are a concise study aid. The learner's goal for this workspace is: "${resource.workspaceGoal}". ${
-        input.type === "short" ? SHORT_PROMPT_INSTRUCTIONS : DETAILED_PROMPT_INSTRUCTIONS
+        input.type === "short"
+          ? SHORT_PROMPT_INSTRUCTIONS
+          : DETAILED_PROMPT_INSTRUCTIONS
       }`;
       const messages = [{ role: "user" as const, content: userMessage }];
       const response = await callAnthropicMessages({
@@ -175,7 +195,9 @@ export const summariesRouter = router({
         .limit(1);
       if (!row) throw new TRPCError({ code: "NOT_FOUND" });
       await loadResource(ctx.db, ctx.user.id, row.resourceId);
-      await ctx.db.delete(resourceSummaries).where(eq(resourceSummaries.id, input.id));
+      await ctx.db
+        .delete(resourceSummaries)
+        .where(eq(resourceSummaries.id, input.id));
       return { ok: true as const };
     }),
 });

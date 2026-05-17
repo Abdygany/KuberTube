@@ -1,9 +1,8 @@
 import "server-only";
 
-import { z } from "zod";
+import { providerSchema, type Provider } from "./providers";
 
-export const providerSchema = z.enum(["youtube", "brave", "anthropic"]);
-export type Provider = z.infer<typeof providerSchema>;
+export { providerSchema, type Provider };
 
 export interface ValidationResult {
   valid: boolean;
@@ -16,9 +15,14 @@ const TIMEOUT_MS = 5000;
  * Uses `videos.list` (1 quota unit) instead of `search.list` (100
  * units) so a validation ping doesn't eat 1% of the user's daily quota.
  */
-export async function validateYouTubeKey(key: string): Promise<ValidationResult> {
+export async function validateYouTubeKey(
+  key: string,
+): Promise<ValidationResult> {
   if (!/^[A-Za-z0-9_-]{20,60}$/.test(key)) {
-    return { valid: false, reason: "Key format does not look like a Google API key" };
+    return {
+      valid: false,
+      reason: "Key format does not look like a Google API key",
+    };
   }
   const url = new URL("https://www.googleapis.com/youtube/v3/videos");
   url.searchParams.set("part", "id");
@@ -30,7 +34,10 @@ export async function validateYouTubeKey(key: string): Promise<ValidationResult>
 /** Brave free tier allows 2k requests/month; this consumes 1. */
 export async function validateBraveKey(key: string): Promise<ValidationResult> {
   if (!/^[A-Za-z0-9_-]{20,80}$/.test(key)) {
-    return { valid: false, reason: "Key format does not look like a Brave subscription token" };
+    return {
+      valid: false,
+      reason: "Key format does not look like a Brave subscription token",
+    };
   }
   const url = new URL("https://api.search.brave.com/res/v1/web/search");
   url.searchParams.set("q", "test");
@@ -45,7 +52,9 @@ export async function validateBraveKey(key: string): Promise<ValidationResult> {
 }
 
 /** `/v1/models` is free, returns 200 with a valid key and 401 otherwise. */
-export async function validateAnthropicKey(key: string): Promise<ValidationResult> {
+export async function validateAnthropicKey(
+  key: string,
+): Promise<ValidationResult> {
   if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(key)) {
     return { valid: false, reason: "Anthropic keys start with sk-ant-" };
   }
@@ -58,7 +67,10 @@ export async function validateAnthropicKey(key: string): Promise<ValidationResul
   });
 }
 
-export async function validateKey(provider: Provider, key: string): Promise<ValidationResult> {
+export async function validateKey(
+  provider: Provider,
+  key: string,
+): Promise<ValidationResult> {
   switch (provider) {
     case "youtube":
       return validateYouTubeKey(key);
@@ -69,7 +81,10 @@ export async function validateKey(provider: Provider, key: string): Promise<Vali
   }
 }
 
-async function pingJson(url: URL, init: RequestInit): Promise<ValidationResult> {
+async function pingJson(
+  url: URL,
+  init: RequestInit,
+): Promise<ValidationResult> {
   try {
     const response = await fetch(url, {
       ...init,
@@ -77,19 +92,34 @@ async function pingJson(url: URL, init: RequestInit): Promise<ValidationResult> 
     });
     if (response.ok) return { valid: true };
     if (response.status === 401 || response.status === 403) {
-      return { valid: false, reason: "Provider rejected the key (unauthorized)" };
+      return {
+        valid: false,
+        reason: "Provider rejected the key (unauthorized)",
+      };
     }
     if (response.status === 400 || response.status === 422) {
-      return { valid: false, reason: "Provider rejected the request (bad key)" };
+      return {
+        valid: false,
+        reason: "Provider rejected the request (bad key)",
+      };
     }
     if (response.status === 429) {
-      return { valid: false, reason: "Provider rate-limited the validation request" };
+      return {
+        valid: false,
+        reason: "Provider rate-limited the validation request",
+      };
     }
-    return { valid: false, reason: `Provider returned HTTP ${response.status}` };
+    return {
+      valid: false,
+      reason: `Provider returned HTTP ${response.status}`,
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
     if (message.includes("aborted") || message.includes("timeout")) {
-      return { valid: false, reason: "Provider did not respond within 5 seconds" };
+      return {
+        valid: false,
+        reason: "Provider did not respond within 5 seconds",
+      };
     }
     return { valid: false, reason: `Network error: ${message}` };
   }

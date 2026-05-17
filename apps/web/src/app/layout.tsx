@@ -14,7 +14,8 @@ const sourceSerif = Source_Serif_4({
 
 export const metadata: Metadata = {
   title: "KuberTube",
-  description: "Учебный workspace для целенаправленного изучения тем без отвлечений.",
+  description:
+    "Учебный workspace для целенаправленного изучения тем без отвлечений.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

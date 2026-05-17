@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc/react";
-import { providerSchema, type Provider } from "@kubertube/core/key-validators";
+import { providerSchema, type Provider } from "@kubertube/core/providers";
 
-const PROVIDER_META: Record<Provider, { label: string; hint: string; required: boolean }> = {
+const PROVIDER_META: Record<
+  Provider,
+  { label: string; hint: string; required: boolean }
+> = {
   youtube: {
     label: "YouTube Data API",
     hint: "console.cloud.google.com → APIs & Services → Credentials",
@@ -35,8 +38,8 @@ export function KeysSection() {
       <header>
         <h2 className="text-lg font-medium">API keys</h2>
         <p className="text-xs text-muted">
-          Хранятся зашифрованными (AES-256-GCM) на бэкенде. Никогда не показываем
-          полный ключ — только последние 4 символа.
+          Хранятся зашифрованными (AES-256-GCM) на бэкенде. Никогда не
+          показываем полный ключ — только последние 4 символа.
         </p>
       </header>
       <div className="space-y-3">
@@ -126,7 +129,9 @@ function ProviderRow({
           </div>
           <p className="text-xs text-muted">{meta.hint}</p>
           {existing ? (
-            <p className="font-mono text-xs text-muted">•••• {existing.keyLast4}</p>
+            <p className="font-mono text-xs text-muted">
+              •••• {existing.keyLast4}
+            </p>
           ) : null}
         </div>
         <div className="flex items-center gap-2">
@@ -163,14 +168,20 @@ function ProviderRow({
             <Button onClick={save} disabled={busy || value.trim().length < 10}>
               {set.isPending ? "Validating..." : "Validate & save"}
             </Button>
-            <Button variant="ghost" onClick={() => setEditing(false)} disabled={busy}>
+            <Button
+              variant="ghost"
+              onClick={() => setEditing(false)}
+              disabled={busy}
+            >
               Cancel
             </Button>
           </div>
         </div>
       ) : null}
 
-      {error ? <p className="mt-3 text-xs text-red-600">{error.message}</p> : null}
+      {error ? (
+        <p className="mt-3 text-xs text-red-600">{error.message}</p>
+      ) : null}
     </div>
   );
 }

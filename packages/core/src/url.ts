@@ -26,10 +26,18 @@ const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/;
  * Returns null when nothing matches. Server and client share this so a
  * resource saved from search has the same id used by the IFrame player.
  */
-export function extractYouTubeId(url: string, metadata?: unknown): string | null {
-  if (typeof metadata === "object" && metadata !== null && "videoId" in metadata) {
+export function extractYouTubeId(
+  url: string,
+  metadata?: unknown,
+): string | null {
+  if (
+    typeof metadata === "object" &&
+    metadata !== null &&
+    "videoId" in metadata
+  ) {
     const candidate = (metadata as { videoId?: unknown }).videoId;
-    if (typeof candidate === "string" && YOUTUBE_ID_RE.test(candidate)) return candidate;
+    if (typeof candidate === "string" && YOUTUBE_ID_RE.test(candidate))
+      return candidate;
   }
   try {
     const u = new URL(url);

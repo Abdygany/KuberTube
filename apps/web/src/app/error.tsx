@@ -22,10 +22,13 @@ export default function GlobalError({
       <div className="space-y-2">
         <h1 className="text-xl font-semibold">Something went wrong</h1>
         <p className="text-sm text-muted">
-          Что-то сломалось. Если это повторяется, проверь Settings — иногда дело в просроченном API-ключе.
+          Что-то сломалось. Если это повторяется, проверь Settings — иногда дело
+          в просроченном API-ключе.
         </p>
         {error.digest ? (
-          <p className="font-mono text-[11px] text-muted">trace: {error.digest}</p>
+          <p className="font-mono text-[11px] text-muted">
+            trace: {error.digest}
+          </p>
         ) : null}
       </div>
       <div className="flex gap-2">
